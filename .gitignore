@@ -1,0 +1,33 @@
+# Direktori Lingkungan Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env
+
+# Jupyter Notebook & Cache
+.ipynb_checkpoints
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Sistem Operasi & Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Database Lokal (Neo4j / Graph / Cache Vector)
+*.db
+*.sqlite3
+data/
+cache/
+neo4j_data/
+zep_data/
+chroma_db/
+
+# Kredensial & API Keys
+.env.local
+secrets.yaml
+config.ini
