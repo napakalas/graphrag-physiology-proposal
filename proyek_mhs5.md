@@ -1,5 +1,8 @@
 # Topik Tugas Akhir Mahasiswa 5: Manajemen Konteks Multi-turn (Memorisation) dan Semantic Caching pada GraphRAG Saraf
 
+## Status Topik
+Topik ini **belum ada yang mengambil** pada batch aktif saat ini.
+
 ## Deskripsi Singkat
 Pada kenyataannya, interaksi pengguna jarang berupa satu pertanyaan putus. User kerap bertanya "Bagaimana anatominya?", lalu diikuti "Lalu apa bahayanya baginya?". Mahasiswa 5 bertanggung jawab mengelola ingatan percakapan (*Context & Memorisation*) di mana sistem harus tahu bahwa "baginya" merujuk pada *node graf anatomi* spesifik dari tanya jawab sebelumnya. Selain itu, mengeksplorasi *Semantic Caching* (menyimpan vektor interaksi ke memori sementara) agar RAG tidak perlu melakukan kueri ulang ke Graph Database berat untuk pertanyaan yang polanya mirip.
 

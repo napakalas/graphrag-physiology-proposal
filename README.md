@@ -4,7 +4,8 @@
 - [Detail Proyek Mahasiswa 1: NLP & Entity Linking](proyek_mhs1.md)
 - [Detail Proyek Mahasiswa 2: Graph Retrieval](proyek_mhs2.md)
 - [Detail Proyek Mahasiswa 3: Prompt Engineering](proyek_mhs3.md)
-- [Detail Proyek Mahasiswa 4: QA & Evaluasi MLOps](proyek_mhs4.md)
+- [Panduan Eksplorasi Data: Cypher, SPARQL, dan Evaluasi RAGAS](panduan_eksplorasi_data_cypher_sparql_ragas.md)
+- [Detail Proyek Mahasiswa 4: QA & Evaluasi RAGAS](proyek_mhs4.md)
 - [Detail Proyek Mahasiswa 5: Context & Semantic Caching](proyek_mhs5.md)
 - [Panduan Manajemen Waktu & Alur Paralel](alur_kerja_paralel.md)
 - [Daftar Lengkap Usulan Judul Skripsi Akademis](judul_skripsi.md)
@@ -12,66 +13,86 @@
 ---
 
 ## 1. Latar Belakang & Tujuan
-Sistem *Retrieval-Augmented Generation* (RAG) konvensional yang berbasis dokumen teks (*vector search*) seringkali gagal menangkap relasi kompleks atau inferensi logis pada pengetahuan medis dan anatomis. Proyek ini bertujuan untuk mengimplementasikan **GraphRAG**—sebuah RAG yang mengintegrasikan *Knowledge Graph* (KG) dan ontologi—khususnya pada domain fisiologi, sistem saraf (*nerve*), dan medis. 
+Sistem *Retrieval-Augmented Generation* (RAG) konvensional yang berbasis dokumen teks (*vector search*) seringkali gagal menangkap relasi kompleks atau inferensi logis pada pengetahuan medis dan anatomis. Proyek ini bertujuan untuk mengimplementasikan **GraphRAG**—sebuah RAG yang mengintegrasikan *Knowledge Graph* (KG) dan ontologi—khususnya pada domain fisiologi, sistem saraf (*nerve*), dan medis.
 
 Tujuan utamanya adalah membangun sistem tanya jawab (QA) biomedis yang mampu melakukan *inference* (penyimpulan) informasi multi-hop antar entitas anatomi, penyakit, dan biologi molekuler secara interaktif. Konstruksi proyek ini dibagi menjadi 5 jalur fokus (dikerjakan oleh 5 mahasiswa secara komprehensif dengan pendekatan *microservices/modular*).
+
+### Dokumen Teknis Batch Aktif
+Bagian ini dipisahkan dari navigasi inti agar struktur tetap stabil ketika mahasiswa bertambah atau judul riset berubah.
+
+1. Batch aktif jalur Query Expansion:
+  - [semantic_query_expansion_graphrag.md](semantic_query_expansion_graphrag.md)
+2. Batch aktif jalur Graph Extraction:
+  - [graph_extraction_matematika.md](graph_extraction_matematika.md)
+3. Batch aktif jalur Prompt Engineering:
+  - Belum ada dokumen teknis aktif (slot terbuka)
+4. Batch aktif jalur Evaluasi RAGAS:
+  - [evaluasi_graphrag_ragas.md](evaluasi_graphrag_ragas.md)
+5. Batch aktif jalur Manajemen Konteks Multi-turn:
+  - Belum ada dokumen teknis aktif (slot terbuka)
+
+### Kode Program Unt8uk bantuan
+- [filter_kg.py](filter_kg.py)
+- [import_neo4j.py](import_neo4j.py)
 
 ---
 
 ## 2. Ketersediaan Knowledge Graph (KG) dan Ontologi di Dalamnya
 Untuk mendukung inferensi (*multi-hop reasoning*), sistem akan menggunakan aset KG skala besar yang telah mengintegrasikan berbagai ontologi standar seperti **FMA** (anatomi manusia), **UBERON** (anatomi lintas spesies), **GO** (*Gene Ontology* untuk proses biologis molekuler), dan **ChEBI** (entitas kimia/obat).
 
-1. **PrimeKG (Precision Medicine Knowledge Graph):**  
+1. **PrimeKG (Precision Medicine Knowledge Graph):**
    * **Ontologi yang terintegrasi:** PrimeKG **menggunakan UBERON dan FMA** sekaligus sebagai kerangka utama anatomi. Selain itu, **GO** digunakan untuk jaringan biologis, gen, dan molekuler, sedangkan **ChEBI** digunakan untuk menautkan senyawa/obat-obatan.
    * *Peruntukan:* Sangat cocok sebagai baseline utama untuk inference gabungan obat (ChEBI) -> target biologis (GO) -> penyakit di organ (FMA/UBERON).
-2. **UMLS (Unified Medical Language System):**  
+2. **UMLS (Unified Medical Language System):**
    * **Ontologi yang terintegrasi:** **FMA, GO, dan ChEBI ada di dalam (ter-include)** sebagai kosokata standar UMLS. Namun, **UBERON secara historis bukan bagian inti langsung dari Metathesaurus UMLS**, melainkan biasanya dipetakan oleh peneliti secara terpisah atau lewat ontologi pihak ketiga (seperti NCI Thesaurus yang ada di UMLS).
    * *Peruntukan:* Digunakan untuk menstandarkan *query* dari bahasa natural (teks *user*) ke format entitas standar (CUI).
-3. **Monarch Initiative KG / SPOKE:**  
+3. **Monarch Initiative KG / SPOKE:**
    * **Ontologi yang terintegrasi:** Monarch Initiative **sangat bergantung pada UBERON** sebagai fondasi lintas spesiesnya. Monarch juga mengintegrasikan **FMA, GO, dan ChEBI**, serta HPO (*Human Phenotype Ontology*).
    * *Peruntukan:* Sangat luar biasa jika mahasiswa ingin memodelkan penalaran komparatif (misal: bagaimana data eksperimentasi sistem saraf pada tikus bisa digunakan RAG untuk menjawab pertanyaan medis pada saraf fisiologis manusia).
 
 ---
 
-## 3. Pembagian Fokus 5 Mahasiswa & Rumusan Masalah
-Agar penelitian S1 tidak sekadar menjadi pembuatan aplikasi, proyek ini dipecah menjadi 5 area eksplorasi spesifik. Masing-masing mahasiswa akan memiliki 1 poin riset mendalam.
+## 3. Pembagian Fokus Proyek & Rumusan Masalah
+Agar struktur fleksibel, pembagian berikut berbasis area proyek, bukan dikunci 1 mahasiswa = 1 area secara permanen. Satu area bisa diisi lebih dari satu mahasiswa dengan judul yang berbeda.
 
-### Mahasiswa 1: Entity Extraction & Query Disambiguation (Fokus NLP)
-* **Tugas:** Menangkap teks pertanyaan panjang dari dokter/user ("Apa efek molekul X pada nyeri saraf *Nervus Vagus*?"), mendeteksi entitasnya, memecahkan ambiguitas (Semantic Disambiguation), dan melebarkan pencarian (*Query Expansion*) menggunakan NLP AI sebelum menautkannya ke *node* resmi di FMA/UBERON.
-* **Rumusan Masalah Penelitian:** 
-  1. Bagaimana arsitektur *Hybrid Entity Linking* (kombinasi leksikal UMLS dan pemahaman semantik via BioBERT/SciBERT) mengatasi ambiguitas dan kependekan istilah medis dalam mengekstrak hirarki konsep anatomi dari teks kueri pengguna?
-  2. Bagaimana pengaruh mekanisme *Query Expansion* (melatih LLM untuk meramalkan sinonim penyakit khusus saraf) terhadap perbaikan presisi *seed node extraction*?
+### Proyek Mahasiswa 1: Entity Extraction, Query Expansion, dan Disambiguasi (Fokus NLP)
+* **Cakupan:** Menangkap teks pertanyaan medis, mengekstrak entitas, melakukan disambiguasi, dan menyiapkan *seed node* untuk retrieval graf.
+* **Contoh Rumusan Masalah:**
+  1. Bagaimana arsitektur *Hybrid Entity Linking* (kombinasi leksikal UMLS dan model semantik) meningkatkan akurasi pemetaan istilah medis ke entitas standar?
+  2. Seberapa besar dampak *semantic query expansion* berbasis LLM terhadap presisi dan *recall* *seed node extraction*?
 
-### Mahasiswa 2: Strategi Retrieval pada Knowledge Graph (Fokus Algoritma Graf)
-* **Tugas:** Setelah *node* awal ditemukan di KG (misal Node Saraf Tepi), menelusuri graf tersebut (Cypher query atau SPARQL) sejauh 2-3 lompatan (*hop*) untuk mengambil informasi penyakit dan obat secara matematis tanpa menarik terlalu banyak data *noise*.
-* **Rumusan Masalah Penelitian:** 
-  1. Bagaimana perbandingan antara metode pencarian subgraf murni (*graph traversal query*) dengan pencarian kemiripan vektor (*vector search*) dalam mengakuisisi konteks fisiologi saraf yang divalidasi presisi-reaksinya (Precision/Recall).
-  2. Algoritma pemangkasan graf (*graph pruning*) apa yang paling efisien untuk membatasi pengambilan konteks agar tidak melebihi batasan *token* input memori pada fase generasi?
+### Proyek Mahasiswa 2: Retrieval, Traversal, dan Pruning Subgraf (Fokus Algoritma Graf)
+* **Cakupan:** Menelusuri graf (Cypher/SPARQL), membangun konteks subgraf, serta mengendalikan *noise* dan batas token untuk LLM.
+* **Contoh Rumusan Masalah:**
+  1. Bagaimana perbandingan *graph traversal* murni dan *vector-based retrieval* dalam akurasi konteks medis?
+  2. Strategi *graph pruning* apa yang paling efektif menjaga kualitas konteks sekaligus efisiensi komputasi?
 
-### Mahasiswa 3: Cross-Domain Inference & Prompt Engineering (Fokus Generasi Teks)
-* **Tugas:** Menyusun hasil tarikan KG (berupa struktur *node-edge-node*) menjadi urutan teks logis (*linearization*). Mahasiswa ini meracik rekayasa *Prompt* agar LLM bisa menyimpulkan kaitan lintas ontologi.
-* **Rumusan Masalah Penelitian:** 
-  1. Bagaimana metode *linearization* (format perubahan struktur subgraf menjadi naratif teks) memengaruhi dan meringankan metrik penyimpangan klaim medis (halusinasi) dari LLM target (seperti LLaMA 3 atau GPT-4)?
-  2. Sejauh mana GraphRAG mendemonstrasikan kemampuan *zero-shot inference* menyeberangkan pengetahuan referensi riset penyakit khusus hewan (ontologi UBERON) agar tepat guna sejalan dengan referensi tubuh manusia (ontologi FMA)?
+### Proyek Mahasiswa 3: Prompt Engineering dan Generasi Konteks (Fokus LLM)
+* **Status:** Belum ada mahasiswa yang mengambil topik ini pada batch aktif saat ini.
+* **Cakupan:** Menyusun strategi prompt, linearisasi subgraf, dan teknik grounding agar jawaban LLM tetap konsisten pada bukti retrieval.
+* **Contoh Rumusan Masalah:**
+  1. Bagaimana format linearisasi subgraf yang paling efektif untuk meningkatkan ketepatan jawaban LLM pada domain medis?
+  2. Bagaimana desain prompt berbasis bukti dapat menurunkan tingkat halusinasi tanpa menurunkan kelengkapan jawaban?
 
-### Mahasiswa 4: Evaluasi End-to-End & Uji Sistem Medis (Fokus Quality Assurance / MLOps)
-* **Tugas:** Membuat alat pembuktian. Menyusun *golden dataset* mandiri yang ditarik dari *Textbook* Fisiologi dasar. Kemudian membuktikan kelayakan jawaban GraphRAG ini dengan parameter medis terhadap penilaian otomatis dari pakar medis (*LLM-as-a-Judge* dan *Human-in-the-loop*).
-* **Rumusan Masalah Penelitian:** 
-  1. Bagaimana tingkat akurasi penalaran sistem *GraphRAG* sistem saraf dapat dievaluasi secara otonom menggunakan kerangka *Retrieval-Augmented Generation Assessment* (seperti metrik RAGAS dan TruLens)?
-  2. Bagaimana perbandingan korelasi indeks validitas klinikal yang dikeluarkan oleh *LLM-Evaluator* dibandingkan dengan penilaian manual *rating* keamanan medis dari tenaga ahli di bidang kesehatan?
+### Proyek Mahasiswa 4: Evaluasi Sistem dan Validasi Klinis (Fokus RAGAS/MLOps)
+* **Cakupan:** Menyusun *ground-truth dataset*, evaluasi RAGAS, integrasi *LLM-as-a-Judge*, validasi pakar (*human-in-the-loop*), dan observabilitas.
+* **Contoh Rumusan Masalah:**
+  1. Bagaimana profil skor *faithfulness*, *answer relevance*, *context precision*, dan *context recall* pada varian pipeline GraphRAG?
+  2. Bagaimana korelasi hasil evaluasi otomatis dengan penilaian pakar medis pada skenario klinis nyata?
 
-### Mahasiswa 5: Multi-Turn Memorisation & Semantic Caching (Fokus Sesi Konteks)
-* **Tugas:** Mengelola kesinambungan interaksi beruntun (*Context Memory*). Jika *user* berkata "Apa pengobatannya untuk saraf tersebut?", sistem harus otomatis menghubungkan *saraf tersebut* ke riwayat pencarian sebelumnya. Menghemat waktu penelusuran kembali ke Graph Database melalui *Semantic Cache*.
-* **Rumusan Masalah Penelitian:** 
-  1. Bagaimana pengaruh integrasi arsitektur penalaran *ConversationBufferMemory* dan *Coreference Resolution* terhadap tingkat kesinambungan pencarian konteks medis berturut-turut pada sesi GraphRAG multi-turn?
-  2. Berapa laju penghematan *latency* (latensi respons LLM) yang diperoleh memori sistem ketika Graph Query diatur untuk dilewati via penerapan pelacakan *Vector Semantic Caching* dibanding tanpa caching?
+### Proyek Mahasiswa 5: Memori Konteks & Semantic Caching (Fokus Sistem Percakapan)
+* **Status:** Belum ada mahasiswa yang mengambil topik ini pada batch aktif saat ini.
+* **Cakupan:** *Coreference resolution*, *conversation memory*, dan caching semantik untuk mengurangi latensi dan menjaga konteks sesi.
+* **Contoh Rumusan Masalah:**
+  1. Seberapa besar dampak *conversation memory* terhadap kesinambungan QA medis multi-turn?
+  2. Berapa pengurangan latensi yang dicapai dari *semantic caching* dibanding arsitektur tanpa cache?
 
 ---
 
 ## 4. Rangkuman Target Akhir Proyek (*Deliverables*) Berbantuan Moduler
-Gabungan dari kelima riset di atas menghasilkan 5 pilar sistem GraphRAG terpadu (Microservices):
-1. **Modul Pengambil Parameter (Mhs 1):** *NLP Entity Linker* cerdas yang tahan salah ketik medis.
-2. **Modul Pengais Informasi (Mhs 2):** Mekanisme *cypher traversal* pada GraphDB secara komputasional tak berlebihan (*pruning* optimal).
-3. **Modul Resistor Fakta (Mhs 3):** Mesin peracik Prompt *anti-halusinasi* (Faithful Translator).
-4. **Modul Pengawas Mutu (Mhs 4):** Pustaka evalusi keamanan teknikal yang bisa diotorisasi jurnal klinis.
-5. **Modul Memori Persisten (Mhs 5):** Layanan penyinggahan (*Caching*) cepat untuk meladeni percakapan tanpa *delay* berlebih dari server utama.
+Gabungan dari kelima area di atas menghasilkan 5 pilar sistem GraphRAG terpadu (microservices):
+1. **Modul Parameter Query (Proyek 1):** *Entity linking*, disambiguasi, dan query expansion.
+2. **Modul Retrieval Subgraf (Proyek 2):** Traversal, pruning, dan penyusunan konteks evidensial.
+3. **Modul Prompting dan Grounding (Proyek 3):** Linearization, prompt template, dan kontrol halusinasi.
+4. **Modul Evaluasi dan Governance (Proyek 4):** Harness RAGAS, audit klinis, observabilitas, dan validasi pakar.
+5. **Modul Memori & Cache (Proyek 5):** Manajemen konteks percakapan dan optimasi latensi.

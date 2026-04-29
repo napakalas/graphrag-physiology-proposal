@@ -1,26 +1,27 @@
-# Topik Tugas Akhir Mahasiswa 3: Generasi Teks dan Inferensi Lintas Domain Berbasis Bukti (Faithfulness)
+# Topik Tugas Akhir Mahasiswa 3: Prompt Engineering dan Generasi Konteks Berbasis Bukti
+
+## Status Topik
+Topik ini **belum ada yang mengambil** pada batch aktif saat ini.
 
 ## Deskripsi Singkat
-*Large Language Model* tidak bisa mencerna gambar/struktur urat (graf) secara langsung. Mahasiswa 3 bertugas menukar (translasi linierisasi) hasil graf relasional rumit dari Mhs 2 menjadi sebuah cerita instruksi konkrit (Prompt), yang dapat memaksa LLM melakukan penalaran (inferensi) tanpa melakukan halusinasi medis. Fokus ini mencakup transisi pemahaman dari anatomi taksa non-manusia ke manusia.
+*Large Language Model* tidak dapat membaca struktur graf secara langsung. Proyek ini berfokus pada cara menerjemahkan subgraf hasil retrieval menjadi prompt yang terstruktur, ringkas, dan berbasis bukti agar LLM menghasilkan jawaban yang relevan dengan risiko halusinasi serendah mungkin.
 
 ## Fokus Eksplorasi (Rumusan Masalah)
-1. Bagaimana dampak teknik rekayasa prompt berbasis bukti (*Evidence-based Chain-of-Thought Prompting*) terhadap penurunan kadar halusinasi informasi LLM di bidang anatomi saraf?
-2. Bagaimana mengeksploitasi kemampuan mesin GraphRAG dalam menyeberangkan pengetahuan referensi riset penyakit model hewan (berbasis The Monarch Initiative - ontologi UBERON) agar diinterpretasikan sejalan dengan referensi anatomi manusia (ontologi FMA)?
+1. Bagaimana strategi linearisasi subgraf memengaruhi kualitas pemahaman LLM pada domain fisiologi dan medis?
+2. Bagaimana desain prompt berbasis bukti (*evidence-grounded prompting*) menurunkan halusinasi tanpa mengorbankan kelengkapan jawaban?
 
 ## Tautan Sumber Daya (*Resources*) Utama
-1. **SPOKE (Scalable Precision Medicine Open Knowledge Engine) & Monarch Initiative:** Penting untuk riset interaksi model hewan/lintas spesies.
-   * *Tautan Monarch:* [Monarch Initiative Knowledge Graph](https://monarchinitiative.org/)
-   * *Tautan UBERON Ontology:* [UBERON di GitHub](https://github.com/obophenotype/uberon)
-   * *Tautan SPOKE:* [SPOKE UCSF](https://spoke.ucsf.edu/)
-2. **LangChain / LlamaIndex:** *Framework* terpopuler untuk menghubungkan AI dengan database eksternal.
-   * *Tautan:* [LlamaIndex (sangat mendukung GraphRAG)](https://www.llamaindex.ai/)
-3. **Ontologi FMA (Human Anatomy):**
-   * *Tautan:* [FMA on BioPortal](https://bioportal.bioontology.org/ontologies/FMA)
+1. **LangChain / LlamaIndex:** Framework untuk orkestrasi prompt dan komponen RAG.
+   * *Tautan:* [LlamaIndex](https://www.llamaindex.ai/)
+2. **Prompting Guides (OpenAI/Anthropic):** Referensi praktik baik prompt engineering.
+   * *Tautan:* [OpenAI Prompting Guide](https://platform.openai.com/docs/guides/prompt-engineering)
+3. **PrimeKG + Neo4j:** Sumber konteks subgraf untuk bahan linearisasi prompt.
+   * *Tautan:* [PrimeKG Repository](https://github.com/mims-harvard/PrimeKG)
 
 ## Peran dalam Arsitektur Utama
-Berada di lapisan belakang (**Generation & Output Tuning**). Mahasiswa meramu Prompt rahasia yang menggabungkan Subgraf relasi dari Mhs 2 + Pertanyaan Awal dari *User*. Sistem Mhs 3 akan mengeluarkan kalimat jawaban kedokteran akhir yang rapi dan memuaskan.
+Berada di lapisan generasi (**Generation & Prompt Control**). Proyek ini menerima output subgraf dari retrieval, lalu membentuk prompt final yang dipakai model bahasa untuk menghasilkan jawaban medis yang *faithful* terhadap konteks.
 
 ## Usulan Judul Skripsi
-1. **Kajian Tingkat Halusinasi Medis (*Faithfulness*) pada *Retrieval-Augmented Generation* Menggunakan Taktik *Evidence-based Prompting***
-2. **Pengaruh Linierisasi Relasi Subgraf terhadap Kemampuan Pemahaman *Large Language Model* Terbuka pada Domain Fisiologi Medis**
-3. **Eksplorasi Kemampuan Penalaran Lintas Spesies dari UBERON menuju FMA Berbasis *Zero-Shot Inference* pada Sistem GraphRAG**
+1. **Kajian Tingkat Halusinasi Medis (*Faithfulness*) pada *Retrieval-Augmented Generation* Menggunakan Taktik *Evidence-Based Prompting***
+2. **Pengaruh Linearisasi Relasi Subgraf terhadap Kualitas Jawaban *Large Language Model* pada Domain Fisiologi Medis**
+3. **Optimasi Template Prompt Berbasis Bukti untuk Menjaga Konsistensi Jawaban pada Sistem GraphRAG Medis**
