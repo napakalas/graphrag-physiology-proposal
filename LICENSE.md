@@ -1,0 +1,1 @@
+© 2026 [Yuda Munarko / Universitas Muhammadiyah Malang. All Rights Reserved.The research topics, titles, and descriptions in this repository are intended solely for educational use by enrolled students. Unauthorized distribution, copying, or public reproduction of this content is strictly prohibited.
