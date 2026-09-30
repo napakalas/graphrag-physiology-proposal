@@ -4,9 +4,9 @@ Berikut adalah referensi gaya penamaan judul skripsi S1 di ranah Teknik Informat
 
 ## Mahasiswa 1: Fokus NLP, Entity Linking, dan Disambiguasi Leksikal
 *Mahasiswa ini akan sering menulis kode seputar Transformers (BioBERT), kamus leksikal (UMLS), dan jarak vektor kata.*
-1. **Analisis Kinerja Model BioBERT dalam Pendekatan *Hybrid Entity Linking* pada *Knowledge Graph* Anatomi Fisiologi** — `terbuka`
+1. **Analisis Kinerja Model BioBERT dalam Pendekatan *Hybrid Entity Linking* pada *Knowledge Graph* Anatomi Fisiologi** — `✅ sudah diambil`
 2. **Penerapan *Semantic Query Expansion* Berbasis LLM untuk Disambiguasi Leksikal Istilah Medis pada Sistem GraphRAG** — `✅ sudah diambil`
-3. **Ekstraksi Entitas Sistem Saraf Otonom Berbasis Ontologi FMA Menggunakan Model Bahasa Alami Terlatih (*Pre-trained NLP*)** — `terbuka`
+3. **Ekstraksi Entitas Sistem Saraf Otonom Berbasis Ontologi FMA Menggunakan Model Bahasa Alami Terlatih (*Pre-trained NLP*)** — `✅ sudah diambil`
 
 ## Mahasiswa 2: Fokus Database Graf (Retrieval & Pruning)
 *Mahasiswa ini akan sering berurusan dengan Big Data, Cypher/Neo4j, SPARQL, efisiensi server, dan waktu ekstraksi kueri terpendek.*
