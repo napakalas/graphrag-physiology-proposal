@@ -11,7 +11,7 @@ Berikut adalah referensi gaya penamaan judul skripsi S1 di ranah Teknik Informat
 ## Mahasiswa 2: Fokus Database Graf (Retrieval & Pruning)
 *Mahasiswa ini akan sering berurusan dengan Big Data, Cypher/Neo4j, SPARQL, efisiensi server, dan waktu ekstraksi kueri terpendek.*
 1. **Analisis Optimasi Arsitektur *Graph Traversal* dan Algoritma Pemangkasan Celah (*Pruning*) pada PrimeKG untuk Penelusuran Konteks Medis** — `terbuka`
-2. **Perbandingan Rasio Ketepatan *Vector Search* dan *Cypher Traversal* dalam Mengakuisisi Subgraf Relasi Penyakit dan Anatomi Saraf** — `terbuka`
+2. **Perbandingan Rasio Ketepatan *Vector Search* dan *Cypher Traversal* dalam Mengakuisisi Subgraf Relasi Penyakit dan Anatomi Saraf** — `✅ sudah diambil`
 3. **Implementasi Ekstraksi Pangkalan Pengetahuan Berbasis Graf untuk Pembangunan Konteks Relasi Penyakit dan Obat Secara Matematis** — `✅ sudah diambil`
 
 ## Mahasiswa 3: Fokus Prompt Engineering dan Generasi Konteks
