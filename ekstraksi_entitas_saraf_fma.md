@@ -333,23 +333,46 @@ pandas>=2.0.0
 
 ---
 
-## 7. Roadmap Pengerjaan 12 Minggu
+## 7. Sistematika Penulisan Proposal Skripsi (Bab 1 – Bab 3)
 
-| Minggu | Target Kerja | Output Konkret |
-|---|---|---|
-| **1–2** | Studi pustaka ontologi FMA dan anatomi sistem saraf otonom. | Desain pedoman anotasi (*annotation guidelines*) 4 kelas entitas. |
-| **3–4** | Anotasi korpus teks menggunakan tool (mis. Doccano / Label Studio). | Korpus 700 kalimat teranotasi format CoNLL. |
-| **5–6** | Fine-tuning baseline model (BERT umum) vs model biomedis (BioBERT/PubMedBERT). | Checkpoint model dan grafik loss pelatihan. |
-| **7–8** | Eksperimen penambahan CRF Layer dan evaluasi metrik *seqeval*. | Laporan tabel komparasi model dan error analysis. |
-| **9–10** | Pembangunan modul normalisasi FMA dan integrasi ekspor graf ke Neo4j. | Pipeline end-to-end dari teks ke triple relasi FMA. |
-| **11–12** | Penyusunan laporan skripsi lengkap dan persiapan demonstrasi sidang. | Naskah skripsi siap uji. |
+Dokumen proposal skripsi berfokus pada pematangan masalah, landasan teori, dan metode yang dapat dipertanggungjawabkan:
+
+### Bab 1: Pendahuluan
+- **Latar Belakang**: Kebutuhan ekstraksi otomatis pengetahuan anatomi saraf otonom (ANS) dari literatur teks bebas untuk pembangunan Knowledge Graph, serta keterbatasan pendekatan *rule-based* regex konvensional.
+- **Rumusan Masalah**:
+  1. Bagaimana merancang skema anotasi token dan melatih model Transformer (*PubMedBERT / BioBERT*) untuk mengenali entitas bertingkat pada sistem saraf otonom?
+  2. Bagaimana memetakan span entitas teks terekstraksi ke dalam kode ontologi formal *Foundational Model of Anatomy (FMA)* secara akurat?
+- **Batasan Masalah**:
+  - Ruang lingkup entitas difokuskan pada 4 kelas spesifik: `NERVE`, `GANGLION`, `PLEXUS`, dan `EFFECTOR`.
+  - Korpus teks bersumber dari teks ajar fisiologi terbuka (*open-source neuroanatomy chapters*) dan abstrak PubMed.
+- **Tujuan Penelitian**: Menghasilkan model ekstraktor entitas dengan *F1-score (strict)* teruji $\ge 85\%$ dan pipeline normalisasi FMA otomatis.
+
+### Bab 2: Tinjauan Pustaka
+- Teori *Information Extraction* & *Named Entity Recognition (NER)* biomedis.
+- Konsep dasar dan struktur ontologi *Foundational Model of Anatomy (FMA)*.
+- Arsitektur Transformer, mekanisme *Self-Attention*, dan tokenisasi WordPiece/BPE pada korpus biomedis.
+- Perbandingan model pre-trained: BERT umum vs SciBERT vs BioBERT/PubMedBERT.
+- Evaluasi sekuens label dengan skema BIO dan metrik *SeqEval*.
+
+### Bab 3: Metodologi Penelitian
+- Tahapan penelitian: (1) Pengumpulan Korpus $\to$ (2) Penyusunan *Annotation Guidelines* $\to$ (3) Anotasi Data format CoNLL $\to$ (4) Fine-tuning Model $\to$ (5) Integrasi Modul Pemetaan FMA $\to$ (6) Evaluasi Kinerja.
+- Strategi penanganan ketidakseimbangan kelas (*class imbalance*) dan *subword token alignment*.
+- Kriteria keberhasilan penelitian (*Success Criteria*).
 
 ---
 
-## 8. Panduan Menghadapi Sidang Skripsi (FAQ Penguji)
+## 8. Panduan Menghadapi Sidang Proposal (Sempro FAQ)
 
-> **Tanya Penguji:** *"Mengapa Anda memilih ontologi FMA (*Foundational Model of Anatomy*) daripada ontologi UBERON atau SNOMED-CT?"*  
-> **Jawab:** UBERON dirancang untuk ontologi komparatif lintas spesies (*cross-species*), sehingga rincian saraf kranial dan divisi otonom manusia disederhanakan. Sedangkan SNOMED-CT berfokus pada terminologi klinis layanan rumah sakit (penagihan/diagnosis). FMA adalah satu-satunya ontologi representasi struktural anatomi manusia murni yang memodelkan relasi spasial, percabangan saraf (*branch_of*), dan inervasi organ (*innervates*) secara matematis dan sangat ketat (*is-a* dan *part-of* hierarchies).
+Berikut adalah antisipasi pertanyaan kritis yang lazim dilontarkan dosen penguji saat **Sidang Seminar Proposal**:
 
-> **Tanya Penguji:** *"Bagaimana model Anda mengatasi masalah Tokenizer WordPiece yang memecah istilah medis asing menjadi subword acak (misalnya 'splanchnic' menjadi ['s', '##plan', '##chnic'])?"*  
-> **Jawab:** Dalam pipeline ini diterapkan skema *subword token alignment*. Label BIO hanya diperhitungkan pada subword pertama (*first subword tagging*) atau dirata-ratakan, sementara subword lanjutan diberi masking label `-100` agar PyTorch mengabaikan komputasi gradiennya saat perhitungan Cross-Entropy Loss. Selain itu, penggunaan PubMedBERT memitigasi masalah ini karena kosakatanya (*vocabulary*) dibangun dari korpus medis murni, sehingga istilah seperti *splanchnic* dipertahankan sebagai satu token utuh.
+> **Tanya Dosen Penguji:** *"Mengapa Anda memilih ontologi FMA (*Foundational Model of Anatomy*) daripada ontologi UBERON atau SNOMED-CT?"*  
+> **Jawab:** UBERON dirancang untuk perbandingan lintas spesies (*cross-species*), sehingga detail divisi anatomi spesifik manusia disederhanakan. Sedangkan SNOMED-CT berfokus pada istilah billing rumah sakit dan prosedur klinis. FMA adalah satu-satunya ontologi referensi anatomi manusia murni yang memodelkan relasi struktural, percabangan saraf (*branch_of*), dan inervasi organ (*innervates*) secara matematis dan sangat ketat (*is-a* dan *part-of* hierarchies).
+
+> **Tanya Dosen Penguji:** *"Proses anotasi data secara manual sering memakan waktu lama dan rentan bias. Bagaimana Anda menjamin kualitas dan reliabilitas dataset yang Anda buat?"*  
+> **Jawab:** Untuk menjamin reliabilitas data anotasi, kami menyusun *Annotation Guidelines* formal berbasis definisi eksplisit FMA sebelum melabeli data. Anotasi dilakukan menggunakan platform terstandar (Doccano/Label Studio). Selain itu, untuk mengukur konsistensi pelabelan, kami menghitung metrik kesepakatan *Inter-Annotator Agreement* menggunakan koefisien **Cohen's Kappa ($\kappa \ge 0.75$)** pada subset data uji silang.
+
+> **Tanya Dosen Penguji:** *"Apa kontribusi ilmiah Anda dalam proposal ini jika Anda hanya melakukan fine-tuning pada model PubMedBERT yang sudah ada?"*  
+> **Jawab:** Kontribusi ilmiah penelitian ini bukan pada pembuatan arsitektur Transformer dari nol, melainkan pada:
+> 1. Formulasi skema anotasi domain-spesifik pertama untuk relasi struktural sistem saraf otonom berbasis FMA.
+> 2. Analisis komparatif empiris pengaruh adaptasi domain korpus medis terhadap penanganan entitas anatomi bertingkat (*nested anatomy entities*).
+> 3. Pembangunan jembatan normalisasi otomatis dari span teks hasil prediksi model menuju graf ontologi formal yang siap diimpor ke Neo4j.

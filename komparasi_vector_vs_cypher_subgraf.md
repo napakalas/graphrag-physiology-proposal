@@ -305,23 +305,43 @@ scikit-learn>=1.3.0
 
 ---
 
-## 7. Roadmap Pengerjaan 12 Minggu
+## 7. Sistematika Penulisan Proposal Skripsi (Bab 1 – Bab 3)
 
-| Minggu | Target Kerja | Output Terukur |
-|---|---|---|
-| **1–2** | Setup instance Neo4j lokal, impor dataset `kg_subset.csv`, indeks schema. | Neo4j berjalan dengan node dan edge PrimeKG. |
-| **3–4** | Pembangunan skrip ekspor teks relasi dan pembangunan indeks FAISS/HNSW. | Index vector `faiss_edges.index` selesai. |
-| **5–6** | Kurasi 50 subgraf *ground truth* (1-hop, 2-hop, 3-hop) bersama referensi medis. | File `ground_truth_subgraphs.json`. |
-| **7–8** | Eksperimen komparasi komprehensif (Precision, Recall, Latency, PPI). | Data mentah metrik dan grafik penurunan performa. |
-| **9–10** | Implementasi strategi *Hybrid Retrieval* (Vector Seed + Cypher Traversal). | Bukti optimasi komparatif. |
-| **11–12** | Penyusunan laporan bab analisis data (Bab 4) dan kesimpulan (Bab 5). | Naskah skripsi lengkap. |
+Dokumen proposal skripsi berfokus pada pematangan masalah, landasan teori, dan metode yang dapat dipertanggungjawabkan:
+
+### Bab 1: Pendahuluan
+- **Latar Belakang**: Fenomena fragmentasi semantik dan *multi-hop relational blindness* pada *Vector Search* dalam GraphRAG medis, dibandingkan kekakuan sintaksis *Cypher Traversal* deterministik.
+- **Rumusan Masalah**:
+  1. Bagaimana perbandingan rasio presisi edge dan keutuhan jalur (*Path Preservation Index*) antara *Vector Search* dan *Cypher Traversal* pada variasi kedalaman penelusuran (1-hop, 2-hop, 3-hop)?
+  2. Pada ambang batas hop ke berapa pencarian vektor mengalami degradasi topologi kritis dalam mengakuisisi subgraf relasi penyakit dan anatomi saraf?
+  3. Bagaimana arsitektur *Hybrid Retrieval* dapat memitigasi kelemahan kedua metode tersebut?
+- **Batasan Masalah**:
+  - Pangkalan data graf menggunakan PrimeKG subgraf neuroanatomi dan penyakit sistem saraf otonom yang di-host pada Neo4j.
+  - Vektor embedding edge diindeks menggunakan FAISS (IndexFlatIP/HNSW).
+- **Tujuan Penelitian**: Menyediakan analisis empiris kuantitatif rasio ketepatan, integritas jalur kausal, dan latensi komputasi antara kedua paradigma pengambilan data.
+
+### Bab 2: Tinjauan Pustaka
+- Teori *Graph Database* & Bahasa Kueri Deklaratif Cypher.
+- Konsep *Dense Vector Search*, *Approximate Nearest Neighbor (ANN)*, dan indeks HNSW.
+- Paradigma *Graph Retrieval-Augmented Generation (GraphRAG)* dan tantangan penalaran multi-tahap.
+- Penelitian Terkait: Evaluasi komparatif metode retrieval berbasis graf vs vektor pada domain biomedis.
+
+### Bab 3: Metodologi Penelitian
+- Tahapan penelitian: (1) Setup Instance Neo4j & PrimeKG $\to$ (2) Pembuatan Indeks Vektor FAISS $\to$ (3) Kurasi 50 Kasus Uji Subgraf *Ground Truth* $\to$ (4) Desain Skenario Hop (1, 2, 3-hop) $\to$ (5) Kalkulasi Metrik Evaluasi Topologi.
+- Formulasi matematis metrik: *Edge Precision*, *Edge Recall*, *Path Preservation Index (PPI)*, dan *Latency*.
+- Kriteria keberhasilan proposal (*Success Criteria*).
 
 ---
 
-## 8. Panduan Menghadapi Sidang Skripsi (FAQ Penguji)
+## 8. Panduan Menghadapi Sidang Proposal (Sempro FAQ)
 
-> **Tanya Penguji:** *"Mengapa Anda tidak menggabungkan saja semua teks edge menjadi satu dokumen besar lalu menggunakan RAG biasa tanpa graf?"*  
-> **Jawab:** Dalam RAG konvensional berbasis chunk teks besar, hubungan kausal bertingkat antar organ saraf mengalami degradasi karena keterbatasan *chunk window* dan hilangnya struktur hierarki. Menggabungkan edge menjadi paragraf teks menghilangkan sifat topologis graf (seperti derajat keterhubungan node dan jarak jalur terpendek), yang mengakibatkan LLM mudah mengalami halusinasi relasional pada pertanyaan penalaran multi-tahap.
+Berikut adalah antisipasi pertanyaan kritis yang lazim dilontarkan dosen penguji saat **Sidang Seminar Proposal**:
 
-> **Tanya Penguji:** *"Kapan kita harus memilih Cypher Traversal dan kapan harus memilih Vector Search?"*  
-> **Jawab:** Vector Search paling unggul pada kueri eksploratif 1-hop yang ambigu secara kosakata untuk menemukan titik masuk (*entry node*). Namun untuk penalaran kausal medis multi-tahap ($\ge 2\text{ hop}$), Cypher Traversal mutlak diperlukan karena hanya algoritma penelusuran graf deterministik yang mampu menjamin keutuhan rantai fisiologis (*Path Preservation*) tanpa menyisipkan relasi palsu.
+> **Tanya Dosen Penguji:** *"Mengapa Anda membandingkan Vector Search dan Cypher Traversal? Bukankah keduanya dirancang untuk keperluan yang berbeda?"*  
+> **Jawab:** Dalam arsitektur GraphRAG modern, terjadi perdebatan arsitektural: apakah kita cukup menggunakan *Vector Search* sederhana (menyimpan triple graf sebagai teks biasa) ataukah investasi infrastruktur pangkalan data graf (Neo4j Cypher) mutlak diperlukan. Penelitian ini hadir untuk menjawab perdebatan tersebut secara saintifik dan empiris pada domain spesifik fisiologi saraf, membuktikan secara kuantitatif batas hop di mana vector search mulai runtuh dan gagal mempertahankan kausalitas medis.
+
+> **Tanya Dosen Penguji:** *"Bagaimana Anda menentukan ground truth subgraf secara objektif agar komparasi ini valid dan tidak bias terhadap Cypher?"*  
+> **Jawab:** *Ground truth* tidak disusun secara subjektif oleh peneliti, melainkan diambil dari jalur relasi kurasi ahli yang sudah terdokumentasi dalam literatur medis standar dan konsorsium PrimeKG (jalur terverifikasi dari penyakit MONDO $\to$ saraf UBERON $\to$ fenotipe HPO). Kami menguji kueri bahasa alami netral yang diumpankan ke kedua sistem secara adil (*fair benchmark*).
+
+> **Tanya Dosen Penguji:** *"Apa manfaat praktis hasil penelitian ini bagi pengembangan sistem AI kesehatan?"*  
+> **Jawab:** Manfaat utamanya adalah panduan arsitektur (*architectural guideline*). Pengembang sistem AI medis akan mengetahui kapan harus mengalokasikan memori untuk graf traversal dan kapan cukup menggunakan pencarian vektor murah, serta menjadi dasar implementasi modul *Hybrid Retrieval Router* yang efisien token dan bebas dari halusinasi relasional.

@@ -326,23 +326,44 @@ scipy>=1.11.0
 
 ---
 
-## 7. Roadmap Pengerjaan 12 Minggu
+## 7. Sistematika Penulisan Proposal Skripsi (Bab 1 – Bab 3)
 
-| Minggu | Target Kerja | Output Terukur |
-|---|---|---|
-| **1–2** | Kajian literatur Graph-to-Text dan prompt engineering pada LLM biomedis. | Desain formal 4 skema representasi teks. |
-| **3–4** | Pembuatan skrip `linearizer.py` dan validasi tokenisasi `tiktoken`. | Unit test modul linearisasi dengan 10 kasus subgraf. |
-| **5–6** | Kurasi 50 pertanyaan penalaran fisiologi bersama acuan buku teks. | File `test_questions_50.json` selesai. |
-| **7–8** | Eksekusi inferensi otomatis (4 format $\times$ 50 kueri $\times$ 2 LLM = 400 generasi teks). | Database log respon lengkap format CSV. |
-| **9–10** | Kalkulasi metrik RAGAS, error analysis halusinasi kausal, dan visualisasi data. | Grafik perbandingan dan tabel komparasi. |
-| **11–12** | Penulisan naskah skripsi Bab 4 dan Bab 5 serta draf artikel publikasi. | Naskah tugas akhir final. |
+Dokumen proposal skripsi berfokus pada pematangan masalah, landasan teori, dan metode yang dapat dipertanggungjawabkan:
+
+### Bab 1: Pendahuluan
+- **Latar Belakang**: Tantangan representasi struktur non-linear graf ke dalam sekuens teks 1D LLM, trade-off *Token Bloat* vs *Relational Hallucination*, dan pentingnya penalaran kausal pada fisiologi medis.
+- **Rumusan Masalah**:
+  1. Bagaimana pengaruh berbagai format linearisasi subgraf (*Raw Triples*, *Markdown Tree*, *Verbalized Text*, dan *Causal Pathway*) terhadap metrik *Faithfulness* dan konsumsi token LLM?
+  2. Format linearisasi manakah yang paling efektif menekan *Causal Hallucination Rate* pada skenario penalaran fisiologi multi-hop?
+- **Batasan Masalah**:
+  - Subgraf pengujian diekstraksi dari pangkalan data PrimeKG (spesifik relasi sistem saraf otonom).
+  - Evaluasi menggunakan model LLM terbuka (Llama-3-8B-Instruct) dan model proprietary (GPT-4o-mini).
+- **Tujuan Penelitian**: Menganalisis secara komparatif pengaruh teknik linearisasi graf terhadap fidelitas jawaban klinis dan efisiensi konsumsi token.
+
+### Bab 2: Tinjauan Pustaka
+- Teori *Large Language Models (LLM)* dan arsitektur Transformer Decoder-Only.
+- Paradigma *Prompt Engineering* dan *In-Context Learning*.
+- Konsep *Graph-to-Text Linearization* dan teknik representasi pengetahuan graf.
+- Metrik Evaluasi Generasi RAG: Framework RAGAS (*Faithfulness*, *Answer Relevance*) dan deteksi halusinasi.
+
+### Bab 3: Metodologi Penelitian
+- Tahapan penelitian: (1) Ekstraksi 50 Kasus Subgraf $\to$ (2) Pembuatan Modul *Linearizer* 4 Format $\to$ (3) Kurasi Pertanyaan Uji Medis $\to$ (4) Orkestrasi Eksekusi Inferensi LLM $\to$ (5) Kalkulasi Metrik Kuantitatif & Uji Signifikansi Statistik.
+- Instrumen evaluasi otomatis menggunakan RAGAS dan validasi silang pakar (*expert spot-check*).
+- Kriteria keberhasilan proposal (*Success Criteria*).
 
 ---
 
-## 8. Panduan Menghadapi Sidang Skripsi (FAQ Penguji)
+## 8. Panduan Menghadapi Sidang Proposal (Sempro FAQ)
 
-> **Tanya Penguji:** *"Mengapa Anda tidak membiarkan LLM menerima langsung data mentah JSON dari database Neo4j?"*  
-> **Jawab:** Format JSON mentah mengandung banyak metadata sintaksis (seperti tanda kurung kurawal ganda, properti internal `elementId`, label tipe) yang memboroskan hingga 40–60% kuota token konteks tanpa memberikan nilai tambah informasi biologis. LLM juga cenderung terdistraksi oleh atribut format daripada fokus pada rantai kausalitas fisiologis.
+Berikut adalah antisipasi pertanyaan kritis yang lazim dilontarkan dosen penguji saat **Sidang Seminar Proposal**:
 
-> **Tanya Penguji:** *"Apakah kesimpulan skripsi Anda berlaku jika model LLM diganti, misalnya dari GPT-4 ke Llama-3?"*  
-> **Jawab:** Dalam penelitian ini dilakukan pengujian lintas model (*cross-model validation*) menggunakan model tertutup (*proprietary*) GPT-4o dan model terbuka (*open-weights*) Llama-3-8B. Tren peningkatan performa pada format *Causal Pathway* terbukti konsisten pada kedua model karena model bahasa terlatih mengandalkan penalaran berbasis langkah berurutan (*step-by-step reasoning* / Chain-of-Thought) untuk memproses logika multi-hop.
+> **Tanya Dosen Penguji:** *"Mengapa topik linearisasi ini layak menjadi skripsi tersendiri? Bukankah kita tinggal memasukkan teks JSON dari database ke prompt LLM?"*  
+> **Jawab:** Memasukkan format JSON mentah memicu pemborosan token hingga 40–60% akibat sintaksis berulang, yang secara langsung meningkatkan biaya API dan memperlambat latensi respon. Lebih krusial lagi, penelitian terkini membuktikan bahwa LLM sering mengalami *lost in the middle* dan salah menafsirkan arah relasi (*subject-object inversion*) jika graf tidak dilinierkan secara semantik. Meneliti format representasi graf terbaik adalah kontribusi nyata di ranah *Knowledge-Augmented Generative AI*.
+
+> **Tanya Dosen Penguji:** *"Bagaimana Anda mengukur 'kualitas jawaban LLM' secara objektif agar tidak terjebak dalam penilaian subjektif mahasiswa?"*  
+> **Jawab:** Pengukuran dilakukan secara objektif menggunakan framework evaluasi terstandarisasi industri, yaitu **RAGAS (Retrieval Augmented Generation Assessment System)**. Metrik *Faithfulness* memecah jawaban menjadi klaim atomik dan memverifikasinya secara matematis terhadap konteks sumber. Kami juga mengukur metrik keras (*hard metrics*) seperti jumlah token via `tiktoken` dan akurasi logika kausalitas bertingkat.
+
+> **Tanya Dosen Penguji:** *"Apakah biaya pemanggilan API LLM (misalnya GPT-4) tidak akan membebani penelitian Anda?"*  
+> **Jawab:** Kami telah merancang mitigasi biaya komputasi dengan memanfaatkan kombinasi:
+> 1. LLM lokal dengan bobot terbuka (*open-weights*) seperti **Llama-3-8B-Instruct** yang dijalankan secara lokal via Ollama / vLLM untuk iterasi eksperimen massal (gratis biaya API).
+> 2. Model komersial efisien (**GPT-4o-mini**) hanya sebagai pembanding tolok ukur (*benchmark benchmark baseline*) pada sampel validasi terpilih (50 kasus uji), dengan estimasi total biaya $< \$5$.

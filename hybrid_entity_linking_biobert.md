@@ -371,23 +371,46 @@ networkx>=3.0
 
 ---
 
-## 7. Roadmap Pengerjaan 12 Minggu
+## 7. Sistematika Penulisan Proposal Skripsi (Bab 1 – Bab 3)
 
-| Minggu | Target Kerja | Deliverable / Output |
-|---|---|---|
-| **1–2** | Kajian literatur BioBERT, UMLS, UBERON, dan setup environment. | Ekstraksi 500 node anatomi dari PrimeKG/UBERON ke format JSON. |
-| **3–4** | Pembangunan modul Dense (BioBERT) dan Sparse (BM25). | Script `hybrid_linker.py` fungsional dasar. |
-| **5–6** | Kurasi 150 data uji (*ground truth*) mencakup sinonim Latin dan singkatan. | `mentions_ground_truth.json` tervalidasi. |
-| **7–8** | Eksperimen tuning bobot $\alpha$ (0.0 hingga 1.0) dan analisis komparasi. | Grafik trade-off $\alpha$ dan tabel performa model tunggal vs hybrid. |
-| **9–10** | Implementasi Graph Neighborhood Disambiguation & integrasi ke modul Mhs 2. | Modul terhubung dengan REST API / pipeline GraphRAG. |
-| **11–12** | Penyusunan draf skripsi (Bab 4 & Bab 5) dan persiapan naskah ujian. | Draf laporan tugas akhir lengkap. |
+Dokumen proposal skripsi berfokus pada pematangan masalah, landasan teori, dan metode yang dapat dipertanggungjawabkan:
+
+### Bab 1: Pendahuluan
+- **Latar Belakang**: Tantangan variasi leksikal anatomi medis (Latin vs vernacular) pada sistem GraphRAG dan kelemahan model leksikal tunggal maupun model vektor murni.
+- **Rumusan Masalah**:
+  1. Bagaimana merancang arsitektur *Hybrid Entity Linking* yang menggabungkan representasi padat BioBERT dan representasi jarang BM25 untuk entitas anatomi sistem saraf?
+  2. Seberapa besar pengaruh integrasi *Graph Neighborhood Prior* terhadap akurasi disambiguasi entitas medis yang ambigu?
+- **Batasan Masalah**:
+  - Domain terbatas pada entitas anatomi fisiologi dan sistem saraf otonom berbasis PrimeKG / UBERON.
+  - Model bahasa yang diuji difokuskan pada keluarga BioBERT (tidak melatih model dari nol/scratch).
+- **Tujuan Penelitian**: Mengukur peningkatan metrik *Accuracy@1*, *MRR*, dan *Recall@5* serta latensi komputasi dari pendekatan hybrid dibanding baseline tunggal.
+
+### Bab 2: Tinjauan Pustaka
+- Teori *Knowledge Graph* dan *Entity Linking* biomedis.
+- Mekanisme kerja Transformer & representasi vektor BioBERT.
+- Teori Information Retrieval leksikal (BM25 Okapi).
+- Struktur taksonomi dan hierarki ontologi UBERON/PrimeKG.
+- *State-of-the-Art*: Komparasi penelitian entity linking biomedis terdahulu (mis. BioSyn, MedCAT, scispaCy).
+
+### Bab 3: Metodologi Penelitian
+- Alur penelitian terstruktur (Studi literatur $\to$ Akuisisi data ontologi $\to$ Pembangunan index ganda $\to$ Penyetelan bobot $\alpha \to$ Evaluasi performa).
+- Spesifikasi instrumen pengujian (*hardware, software, environment*).
+- Kriteria keberhasilan penelitian (*Success Criteria*).
 
 ---
 
-## 8. Panduan Menghadapi Sidang Skripsi (FAQ Penguji)
+## 8. Panduan Menghadapi Sidang Proposal (Sempro FAQ)
 
-> **Tanya Penguji:** *"Mengapa Anda tidak menggunakan model Sentence-Transformers biasa seperti `all-MiniLM-L6-v2` yang jauh lebih ringan dibanding BioBERT?"*  
-> **Jawab:** Model umum seperti MiniLM dilatih pada korpus Wikipedia dan berita harian, sehingga gagal memahami perbedaan klinis penting antara istilah Latin dan kode saraf (misalnya perbedaan fungsional antara *splanchnic* vs *vagus*). BioBERT dilatih pada jutaan abstrak PubMed medis sehingga representasi ruang vektornya memisahkan struktur anatomi mikro dengan jauh lebih akurat.
+Berikut adalah antisipasi pertanyaan kritis yang lazim dilontarkan dosen penguji saat **Sidang Seminar Proposal**:
 
-> **Tanya Penguji:** *"Jika BioBERT sudah bagus, mengapa masih membutuhkan BM25 yang merupakan algoritma lawas?"*  
-> **Jawab:** Dense embedding memiliki kelemahan intrinsik berupa *hubness problem* dan *soft matching* yang terkadang menggeneralisir angka kranial ("Nervus VII" dianggap sangat mirip secara kosinus dengan "Nervus VIII" karena konteks kalimatnya identik). BM25 bertindak sebagai pagar pengaman (*guardrail*) leksikal yang memaksakan bobot tinggi pada token unik spesifik seperti angka Romawi dan akronim medis.
+> **Tanya Dosen Penguji:** *"Apa urgensi dan nilai kebaruan (novelty) dari penelitian Anda? Bukankah BioBERT dan BM25 adalah algoritma yang sudah mapan?"*  
+> **Jawab:** Kebaruan penelitian ini terletak pada **formulasi integrasi hybrid bertingkat (dual-stage scoring + topological prior)** yang dirancang khusus untuk menangani karakteristik unik ontologi anatomi fisiologi. Pada istilah anatomi saraf, model dense sering gagal membedakan entitas berdekatan fungsional (*nervus VII* vs *nervus VIII*), sedangkan model sparse gagal pada istilah Latin vs Inggris. Kebaruan terletak pada optimasi fungsi fusi bobot dinamis dan pembuktian empiris bahwa integrasi topologi graf ontologi mampu memecahkan ambiguitas lokal secara deterministik.
+
+> **Tanya Dosen Penguji:** *"Bagaimana Anda menetapkan batasan masalah agar penelitian ini realistis diselesaikan dalam satu semester tanpa bantuan dokter spesialis setiap hari?"*  
+> **Jawab:** Ruang lingkup dibatasi secara ketat pada subgraf anatomi sistem saraf otonom (500 entitas UBERON/FMA pada PrimeKG). Untuk *ground truth*, kami menggunakan data yang telah terkurasi secara baku dalam pangkalan data ontologi publik (UBERON dan UMLS Metathesaurus), sehingga verifikasi tidak bergantung pada opini subjektif dokter individu melainkan pada standar taksonomi biomedis internasional yang sudah *peer-reviewed*.
+
+> **Tanya Dosen Penguji:** *"Apa kriteria keberhasilan dari proposal skripsi Anda? Kapan metode hybrid ini dianggap berhasil?"*  
+> **Jawab:** Penelitian ini dinyatakan berhasil apabila:
+> 1. Pendekatan Hybrid mampu menghasilkan peningkatan *Accuracy@1* minimal 10% absolut dibandingkan baseline leksikal murni (BM25) pada data kueri uji.
+> 2. Peningkatan nilai *Mean Reciprocal Rank (MRR)* mencapai $\ge 0.85$.
+> 3. Latensi inferensi rata-rata tetap berada di bawah ambang interaktif ($< 35\text{ ms}$ per kueri) sehingga layak diintegrasikan ke dalam pipeline GraphRAG secara *real-time*.
