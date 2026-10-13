@@ -17,7 +17,7 @@ Berikut adalah referensi gaya penamaan judul skripsi S1 di ranah Teknik Informat
 ## Mahasiswa 3: Fokus Prompt Engineering dan Generasi Konteks
 *Topik ini saat ini belum ada yang mengambil pada batch aktif, namun disiapkan sebagai slot riset strategis untuk kontrol halusinasi di layer generasi.*
 1. **Kajian Tingkat Halusinasi Medis (*Faithfulness*) pada *Retrieval-Augmented Generation* Menggunakan Taktik *Evidence-Based Prompting*** — `terbuka`
-2. **Pengaruh Linearisasi Relasi Subgraf terhadap Kualitas Jawaban *Large Language Model* pada Domain Fisiologi Medis** — `terbuka`
+2. **Pengaruh Linearisasi Relasi Subgraf terhadap Kualitas Jawaban *Large Language Model* pada Domain Fisiologi Medis** — `pending`
 3. **Optimasi Template Prompt Berbasis Bukti untuk Menjaga Konsistensi Jawaban pada Sistem GraphRAG Medis** — `terbuka`
 
 ## Mahasiswa 4: Fokus Evaluasi Sistem dan RAGAS (MLOps / QA)
