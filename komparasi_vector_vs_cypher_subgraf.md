@@ -1,7 +1,7 @@
 # Perbandingan Rasio Ketepatan Vector Search dan Cypher Traversal dalam Mengakuisisi Subgraf Relasi Penyakit dan Anatomi Saraf
 
-**Topik Mahasiswa 2 – Database Graf & Retrieval Layer**  
-Referensi kurikulum: Tugas Akhir / Skripsi S1 Teknik Informatika  
+**Topik Mahasiswa 2 – Database Graf & Retrieval Layer**
+Referensi kurikulum: Tugas Akhir / Skripsi S1 Teknik Informatika
 
 ---
 
@@ -78,11 +78,11 @@ $$\mathcal{G} = (\mathcal{V}, \mathcal{E}, \mathcal{R})$$
 
 Untuk kueri $q$ yang menanyakan mekanisme kausal penyakit terhadap organ target, terdapat subgraf acuan kebenaran (*ground truth subgraph*):
 
-$$\mathcal{G}^*_q = (\mathcal{V}^*_q, \mathcal{E}^*_q) \subseteq \mathcal{G}$$
+$$\mathcal{G}^{*}_{q} = (\mathcal{V}^{*}_{q}, \mathcal{E}^{*}_{q}) \subseteq \mathcal{G}$$
 
-Di mana $\mathcal{E}^*_q$ memuat jalur inferensi medis yang sah:
+Di mana $\mathcal{E}^{*}_{q}$ memuat jalur inferensi medis yang sah:
 
-$$\mathcal{P}^* = (v_{\text{disease}} \xrightarrow{r_1} v_{\text{nerve}} \xrightarrow{r_2} v_{\text{ganglion}} \xrightarrow{r_3} v_{\text{effector}})$$
+$$\mathcal{P}^{*} = (v_{\text{disease}} \xrightarrow{r_1} v_{\text{nerve}} \xrightarrow{r_2} v_{\text{ganglion}} \xrightarrow{r_3} v_{\text{effector}})$$
 
 ### 3.2 Formalisasi Pengambilan Berbasis Vektor (Vector Retrieval)
 
@@ -102,19 +102,24 @@ $$\mathcal{E}_{\text{cyp}}(k) = \{(u, r, v) \in \mathcal{E} \mid \text{dist}_{\m
 
 1. **Rasio Presisi Edge (Edge Precision Ratio)**:
    Mengukur proporsi edge yang diambil yang benar-benar relevan dengan fakta medis ground truth:
-   $$\text{Precision}_{\text{edge}} = \frac{|\mathcal{E}_{\text{ret}} \cap \mathcal{E}^*_q|}{|\mathcal{E}_{\text{ret}}|}$$
+
+   $$\text{Precision}_{\text{edge}} = \frac{|\mathcal{E}_{\text{ret}} \cap \mathcal{E}^{*}_{q}|}{|\mathcal{E}_{\text{ret}}|}$$
 
 2. **Rasio Kelengkapan Edge (Edge Recall Ratio)**:
    Mengukur seberapa lengkap fakta ground truth yang berhasil terambil:
-   $$\text{Recall}_{\text{edge}} = \frac{|\mathcal{E}_{\text{ret}} \cap \mathcal{E}^*_q|}{|\mathcal{E}^*_q|}$$
+
+   $$\text{Recall}_{\text{edge}} = \frac{|\mathcal{E}_{\text{ret}} \cap \mathcal{E}^{*}_{q}|}{|\mathcal{E}^{*}_{q}|}$$
 
 3. **Indeks Keutuhan Jalur (Path Preservation Index / PPI)**:
    Mengukur apakah relasi multi-hop yang diambil membentuk rantai penalaran utuh atau terfragmentasi:
-   $$\text{PPI} = \frac{|\{p \in \mathcal{P}(\mathcal{G}_{\text{ret}}) \mid p \subseteq \mathcal{G}^*_q\}|}{|\mathcal{P}(\mathcal{G}^*_q)|}$$
+
+   $$\text{PPI} = \frac{|\{p \in \mathcal{P}(\mathcal{G}_{\text{ret}}) \mid p \subseteq \mathcal{G}^{*}_{q}\}|}{|\mathcal{P}(\mathcal{G}^{*}_{q})|}$$
+
    Jika $\text{PPI} = 0$, artinya subgraf terambil tidak memiliki jalur penghubung antara penyakit dan organ target, meskipun banyak node individual terambil.
 
 4. **Kepadatan Informasi (Graph Density of Relevance)**:
-   $$\rho_{\text{rel}} = \frac{|\mathcal{E}_{\text{ret}} \cap \mathcal{E}^*_q|}{|\mathcal{V}_{\text{ret}}|}$$
+
+   $$\rho_{\text{rel}} = \frac{|\mathcal{E}_{\text{ret}} \cap \mathcal{E}^{*}_{q}|}{|\mathcal{V}_{\text{ret}}|}$$
 
 ---
 
@@ -174,7 +179,7 @@ class RetrievalComparator:
         Dalam praktek riil, memanggil indeks vector database (mis. Milvus / Qdrant)
         """
         t_start = time.perf_counter()
-        
+
         # Simulasi edge yang terambil oleh pencarian vektor (campuran relevan dan false-positives)
         simulated_vector_edges = {
             ("Horner Syndrome", "causes", "Ptosis"),
@@ -184,7 +189,7 @@ class RetrievalComparator:
             ("Diabetic Neuropathy", "causes", "Gastroparesis"),  # Noise / False Positive
             ("Vagus Nerve", "innervates", "Heart")             # Noise / False Positive
         }
-        
+
         latency = (time.perf_counter() - t_start) * 1000.0
         return simulated_vector_edges, latency
     }
@@ -223,10 +228,10 @@ if __name__ == "__main__":
     }
 
     print("=== PENGUJIAN METRIK RETRIEVAL SUBGRAF ===")
-    
+
     # Mock pengujian tanpa koneksi aktif database eksternal
     comparator = RetrievalComparator("bolt://localhost:7687", "neo4j", "password_mock")
-    
+
     # Jalur Vector
     vec_edges, vec_lat = comparator.mock_vector_retrieval("Horner syndrome pupil pathway", top_k=6)
     vec_metrics = comparator.compute_metrics(vec_edges, ground_truth)
@@ -269,7 +274,7 @@ Pengujian dilakukan pada 4 tingkat kompleksitas kueri:
 | | Cypher Traversal | **89.5%** | **79.8%** | **86.4%** | 16.2 ms |
 | **3-Hop** | **Hybrid (Usulan)** | **88.1%** | **86.5%** | **87.2%** | 9.7 ms |
 
-> **Temuan Kunci (Critical Insight):**  
+> **Temuan Kunci (Critical Insight):**
 > Pada penelusuran 3-hop, *Path Preservation Index (PPI)* pada Vector Search runtuh hingga **12.5%**. Hal ini membuktikan bahwa vector search mengalami *semantic fragmentation*: ia berhasil menemukan kata kunci entitas, tetapi gagal menyajikan keterhubungan rantai kausal.
 
 ---
@@ -337,11 +342,11 @@ Dokumen proposal skripsi berfokus pada pematangan masalah, landasan teori, dan m
 
 Berikut adalah antisipasi pertanyaan kritis yang lazim dilontarkan dosen penguji saat **Sidang Seminar Proposal**:
 
-> **Tanya Dosen Penguji:** *"Mengapa Anda membandingkan Vector Search dan Cypher Traversal? Bukankah keduanya dirancang untuk keperluan yang berbeda?"*  
+> **Tanya Dosen Penguji:** *"Mengapa Anda membandingkan Vector Search dan Cypher Traversal? Bukankah keduanya dirancang untuk keperluan yang berbeda?"*
 > **Jawab:** Dalam arsitektur GraphRAG modern, terjadi perdebatan arsitektural: apakah kita cukup menggunakan *Vector Search* sederhana (menyimpan triple graf sebagai teks biasa) ataukah investasi infrastruktur pangkalan data graf (Neo4j Cypher) mutlak diperlukan. Penelitian ini hadir untuk menjawab perdebatan tersebut secara saintifik dan empiris pada domain spesifik fisiologi saraf, membuktikan secara kuantitatif batas hop di mana vector search mulai runtuh dan gagal mempertahankan kausalitas medis.
 
-> **Tanya Dosen Penguji:** *"Bagaimana Anda menentukan ground truth subgraf secara objektif agar komparasi ini valid dan tidak bias terhadap Cypher?"*  
+> **Tanya Dosen Penguji:** *"Bagaimana Anda menentukan ground truth subgraf secara objektif agar komparasi ini valid dan tidak bias terhadap Cypher?"*
 > **Jawab:** *Ground truth* tidak disusun secara subjektif oleh peneliti, melainkan diambil dari jalur relasi kurasi ahli yang sudah terdokumentasi dalam literatur medis standar dan konsorsium PrimeKG (jalur terverifikasi dari penyakit MONDO $\to$ saraf UBERON $\to$ fenotipe HPO). Kami menguji kueri bahasa alami netral yang diumpankan ke kedua sistem secara adil (*fair benchmark*).
 
-> **Tanya Dosen Penguji:** *"Apa manfaat praktis hasil penelitian ini bagi pengembangan sistem AI kesehatan?"*  
+> **Tanya Dosen Penguji:** *"Apa manfaat praktis hasil penelitian ini bagi pengembangan sistem AI kesehatan?"*
 > **Jawab:** Manfaat utamanya adalah panduan arsitektur (*architectural guideline*). Pengembang sistem AI medis akan mengetahui kapan harus mengalokasikan memori untuk graf traversal dan kapan cukup menggunakan pencarian vektor murah, serta menjadi dasar implementasi modul *Hybrid Retrieval Router* yang efisien token dan bebas dari halusinasi relasional.
