@@ -103,23 +103,24 @@ $$\mathcal{E}_{\text{cyp}}(k) = \{(u, r, v) \in \mathcal{E} \mid \text{dist}_{\m
 1. **Rasio Presisi Edge (Edge Precision Ratio)**:
    Mengukur proporsi edge yang diambil yang benar-benar relevan dengan fakta medis ground truth:
 
-   $$\text{Precision}_{\text{edge}} = \frac{|\mathcal{E}_{\text{ret}} \cap \mathcal{E}^{*}_{q}|}{|\mathcal{E}_{\text{ret}}|}$$
+   $$\text{Precision}_{\text{edge}} = \frac{|\mathcal{E}_{\text{ret}} \cap \mathcal{E}^*_q|}{|\mathcal{E}_{\text{ret}}|}$$
 
 2. **Rasio Kelengkapan Edge (Edge Recall Ratio)**:
    Mengukur seberapa lengkap fakta ground truth yang berhasil terambil:
 
-   $$\text{Recall}_{\text{edge}} = \frac{|\mathcal{E}_{\text{ret}} \cap \mathcal{E}^{*}_{q}|}{|\mathcal{E}^{*}_{q}|}$$
+   $$\text{Recall}_{\text{edge}} = \frac{|\mathcal{E}_{\text{ret}} \cap \mathcal{E}^*_q|}{|\mathcal{E}^*_q|}$$
 
 3. **Indeks Keutuhan Jalur (Path Preservation Index / PPI)**:
    Mengukur apakah relasi multi-hop yang diambil membentuk rantai penalaran utuh atau terfragmentasi:
 
-   $$\text{PPI} = \frac{|\{p \in \mathcal{P}(\mathcal{G}_{\text{ret}}) \mid p \subseteq \mathcal{G}^{*}_{q}\}|}{|\mathcal{P}(\mathcal{G}^{*}_{q})|}$$
+   $$\text{PPI} = \frac{|\{p \in \mathcal{P}(\mathcal{G}_{\text{ret}}) \mid p \subseteq \mathcal{G}^*_q\}|}{|\mathcal{P}(\mathcal{G}^*_q)|}$$
 
-   Jika $\text{PPI} = 0$, artinya subgraf terambil tidak memiliki jalur penghubung antara penyakit dan organ target, meskipun banyak node individual terambil.
+   Jika $\text{PPI}=0$, artinya subgraf terambil tidak memiliki jalur penghubung antara penyakit dan organ target, meskipun banyak node individual terambil.
 
 4. **Kepadatan Informasi (Graph Density of Relevance)**:
 
-   $$\rho_{\text{rel}} = \frac{|\mathcal{E}_{\text{ret}} \cap \mathcal{E}^{*}_{q}|}{|\mathcal{V}_{\text{ret}}|}$$
+   $$\rho_{\text{rel}} = \frac{|\mathcal{E}_{\text{ret}} \cap \mathcal{E}^*_q|}{|\mathcal{V}_{\text{ret}}|}$$
+
 
 ---
 
