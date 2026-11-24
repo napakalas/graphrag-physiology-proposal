@@ -127,182 +127,126 @@ $$S_{\text{final}}(e_i) = S_{\text{hybrid}}(m, e_i) + \lambda \sum_{j \neq i} \t
 
 ## 4. Implementasi Kode Python
 
-Berikut adalah implementasi modul hybrid entity linker yang dirancang khusus untuk memetakan kueri anatomi fisiologi ke node ontologi UBERON/PrimeKG. Kode menggunakan konvensi **Allman style** untuk penempatan tanda kurung kurawal.
+Berikut adalah implementasi modul hybrid entity linker yang dirancang khusus untuk memetakan kueri anatomi fisiologi ke node ontologi UBERON/PrimeKG. Bagian ini mengimplementasikan skor hibrida $S_{\text{hybrid}}$; suku koherensi graf $\text{Coh}(e_i, e_j)$ ditambahkan pada tahap disambiguasi setelah kandidat Top-K diperoleh.
 
 ```python
-import torch
+from typing import Dict, List, Optional
+
 import numpy as np
-from typing import List, Dict, Tuple
-from transformers import AutoTokenizer, AutoModel
+import torch
 from rank_bm25 import BM25Okapi
+from transformers import AutoModel, AutoTokenizer
+
 
 class HybridEntityLinker:
-{
+    """Entity linking hibrida: skor BM25 (sparse) + kemiripan kosinus BioBERT (dense)."""
+
     def __init__(self, model_name: str = "dmis-lab/biobert-base-cased-v1.2", alpha: float = 0.65) -> None:
-    {
-        self.alpha = alpha
+        self.alpha = alpha  # bobot skor dense; (1 - alpha) untuk skor sparse
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        
+
         print(f"[Init] Loading BioBERT model: {model_name} on {self.device}")
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.dense_model = AutoModel.from_pretrained(model_name).to(self.device)
         self.dense_model.eval()
 
         self.entities: List[Dict] = []
-        self.entity_embeddings: np.ndarray = np.array([])
-        self.bm25: BM25Okapi = None
-    }
+        self.entity_embeddings: Optional[np.ndarray] = None
+        self.bm25: Optional[BM25Okapi] = None
 
     def index_knowledge_base(self, ontology_records: List[Dict]) -> None:
-    {
-        """
-        ontology_records format:
-        [
-            {"id": "UBERON:0001759", "name": "vagus nerve", "synonyms": ["cranial nerve X", "nervus vagus"]},
-            ...
-        ]
+        """Membangun indeks BM25 dan matriks embedding dari rekaman ontologi.
+
+        Format ontology_records:
+            [{"id": "UBERON:0001759", "name": "vagus nerve",
+              "synonyms": ["cranial nerve X", "nervus vagus"]}, ...]
         """
         self.entities = ontology_records
-        corpus_texts = []
-        tokenized_corpus = []
+        corpus_texts = [
+            f"{item['name']} " + " ".join(item.get("synonyms", []))
+            for item in ontology_records
+        ]
 
-        for item in ontology_records:
-        {
-            combined_text = f"{item['name']} " + " ".join(item.get("synonyms", []))
-            corpus_texts.append(combined_text)
-            tokenized_corpus.append(combined_text.lower().split())
-        }
-
-        # 1. Bangun Inverted Index BM25
+        # 1. Indeks BM25
         print(f"[Indexing] Building BM25 index over {len(corpus_texts)} anatomy concepts...")
-        self.bm25 = BM25Okapi(tokenized_corpus)
+        self.bm25 = BM25Okapi([text.lower().split() for text in corpus_texts])
 
-        # 2. Bangun Dense Embeddings menggunakan BioBERT
-        print(f"[Indexing] Computing BioBERT dense vectors...")
-        embeddings = []
-        with torch.no_grad():
-        {
-            for text in corpus_texts:
-            {
-                vec = self._encode_text(text)
-                embeddings.append(vec)
-            }
-        }
-        self.entity_embeddings = np.vstack(embeddings)
+        # 2. Embedding dense BioBERT
+        print("[Indexing] Computing BioBERT dense vectors...")
+        self.entity_embeddings = np.vstack([self._encode_text(text) for text in corpus_texts])
         print(f"[Indexing] Finished. Matrix shape: {self.entity_embeddings.shape}")
-    }
 
+    @torch.no_grad()
     def _encode_text(self, text: str) -> np.ndarray:
-    {
+        """Mean-pooling hidden state terakhir, dinormalisasi L2 (sehingga dot product = kosinus)."""
         inputs = self.tokenizer(
-            text,
-            padding=True,
-            truncation=True,
-            max_length=64,
-            return_tensors="pt"
+            text, truncation=True, max_length=64, return_tensors="pt"
         ).to(self.device)
 
-        outputs = self.dense_model(**inputs)
-        # Menggunakan mean-pooling dari hidden states terakhir
-        token_embeddings = outputs.last_hidden_state
-        attention_mask = inputs["attention_mask"].unsqueeze(-1)
-        mean_pooled = torch.sum(token_embeddings * attention_mask, dim=1) / torch.clamp(attention_mask.sum(dim=1), min=1e-9)
+        token_embeddings = self.dense_model(**inputs).last_hidden_state
+        mask = inputs["attention_mask"].unsqueeze(-1)
+        mean_pooled = (token_embeddings * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1e-9)
         normalized = torch.nn.functional.normalize(mean_pooled, p=2, dim=1)
         return normalized.cpu().numpy().flatten()
-    }
 
     def link_entity(self, mention: str, top_k: int = 5) -> List[Dict]:
-    {
+        if self.bm25 is None or self.entity_embeddings is None:
+            raise RuntimeError("Panggil index_knowledge_base() terlebih dahulu.")
+
         mention_clean = mention.strip()
-        tokens = mention_clean.lower().split()
 
-        # 1. Sparse Scores (BM25)
-        raw_sparse_scores = np.array(self.bm25.get_scores(tokens))
-        sparse_norm = self._min_max_normalize(raw_sparse_scores)
+        # 1. Skor sparse (BM25)
+        sparse_norm = self._min_max_normalize(np.array(self.bm25.get_scores(mention_clean.lower().split())))
 
-        # 2. Dense Scores (Cosine Similarity)
-        query_vec = self._encode_text(mention_clean)
-        raw_dense_scores = np.dot(self.entity_embeddings, query_vec)
-        dense_norm = self._min_max_normalize(raw_dense_scores)
+        # 2. Skor dense (kemiripan kosinus)
+        dense_norm = self._min_max_normalize(self.entity_embeddings @ self._encode_text(mention_clean))
 
-        # 3. Hybrid Fusion
-        hybrid_scores = (self.alpha * dense_norm) + ((1.0 - self.alpha) * sparse_norm)
+        # 3. Fusi hibrida
+        hybrid_scores = self.alpha * dense_norm + (1.0 - self.alpha) * sparse_norm
 
         # 4. Ambil Top-K
         top_indices = np.argsort(hybrid_scores)[::-1][:top_k]
-
-        results = []
-        for idx in top_indices:
-        {
-            entity_data = self.entities[idx]
-            results.append(
+        return [
             {
-                "id": entity_data["id"],
-                "canonical_name": entity_data["name"],
+                "id": self.entities[idx]["id"],
+                "canonical_name": self.entities[idx]["name"],
                 "hybrid_score": float(hybrid_scores[idx]),
                 "dense_score": float(dense_norm[idx]),
-                "sparse_score": float(sparse_norm[idx])
-            })
-        }
-        return results
-    }
+                "sparse_score": float(sparse_norm[idx]),
+            }
+            for idx in top_indices
+        ]
 
     @staticmethod
     def _min_max_normalize(scores: np.ndarray) -> np.ndarray:
-    {
         denom = scores.max() - scores.min()
         if denom == 0:
-        {
-            return np.zeros_like(scores)
-        }
+            return np.zeros_like(scores, dtype=float)
         return (scores - scores.min()) / denom
-    }
-}
+
 
 if __name__ == "__main__":
-{
+    # Contoh ontologi kecil (ID UBERON; verifikasi di OLS/BioPortal sebelum dipakai).
     mock_ontology = [
-        {
-            "id": "UBERON:0001759",
-            "name": "vagus nerve",
-            "synonyms": ["cranial nerve X", "nervus vagus", "parasympathetic nerve 10"]
-        },
-        {
-            "id": "UBERON:0001758",
-            "name": "glossopharyngeal nerve",
-            "synonyms": ["cranial nerve IX", "nervus glossopharyngeus"]
-        },
-        {
-            "id": "UBERON:0000948",
-            "name": "heart",
-            "synonyms": ["cardiac muscle organ", "cor"]
-        },
-        {
-            "id": "UBERON:0002110",
-            "name": "sinoatrial node",
-            "synonyms": ["SA node", "pacemaker of heart"]
-        }
+        {"id": "UBERON:0001759", "name": "vagus nerve",
+         "synonyms": ["cranial nerve X", "nervus vagus"]},
+        {"id": "UBERON:0001649", "name": "glossopharyngeal nerve",
+         "synonyms": ["cranial nerve IX", "nervus glossopharyngeus"]},
+        {"id": "UBERON:0000948", "name": "heart",
+         "synonyms": ["cardiac muscle organ", "cor"]},
+        {"id": "UBERON:0002351", "name": "sinoatrial node",
+         "synonyms": ["SA node", "pacemaker of heart"]},
     ]
 
     linker = HybridEntityLinker(alpha=0.6)
     linker.index_knowledge_base(mock_ontology)
 
-    test_queries = [
-        "nervus vagus",
-        "cranial nerve 10",
-        "SA node pacemaker"
-    ]
-
-    for q in test_queries:
-    {
+    for q in ["nervus vagus", "cranial nerve 10", "SA node pacemaker"]:
         print(f"\n[Query]: '{q}'")
-        matches = linker.link_entity(q, top_k=2)
-        for m in matches:
-        {
-            print(f"  -> {m['id']} | {m['canonical_name']} (Hybrid: {m['hybrid_score']:.3f}, Dense: {m['dense_score']:.3f}, Sparse: {m['sparse_score']:.3f})")
-        }
-    }
-}
+        for m in linker.link_entity(q, top_k=2):
+            print(f"  -> {m['id']} | {m['canonical_name']} "
+                  f"(Hybrid: {m['hybrid_score']:.3f}, Dense: {m['dense_score']:.3f}, "
+                  f"Sparse: {m['sparse_score']:.3f})")
 ```
 
 ---
@@ -327,14 +271,27 @@ if __name__ == "__main__":
    $$\text{MRR} = \frac{1}{|Q|} \sum_{i=1}^{|Q|} \frac{1}{\text{rank}_i}$$
 4. **Latency (Rata-rata Waktu Inferensi)**: Diukur dalam milidetik ($ms$) per kueri.
 
-### 5.3 Rencana Hasil Pengujian (Baseline vs Hybrid)
+### 5.3 Desain Perbandingan dan Hipotesis (Baseline vs Hybrid)
 
-| Metode | Accuracy@1 | Recall@5 | MRR | Latensi (ms) |
-|---|---|---|---|---|
-| **Baseline 1: Pure BM25 (Sparse)** | 62.4% | 76.1% | 0.68 | **1.2 ms** |
-| **Baseline 2: Pure BioBERT (Dense)** | 78.5% | 89.2% | 0.81 | 18.5 ms |
-| **Usulan: Hybrid (BM25 + BioBERT)** | **88.7%** | **96.4%** | **0.91** | 19.8 ms |
-| **Usulan: Hybrid + Graph Disambiguation** | **91.2%** | **97.8%** | **0.93** | 24.3 ms |
+> Angka hasil **tidak** dicantumkan sebelum eksperimen dijalankan. Yang dirumuskan di proposal adalah metode pembanding, protokol, dan hipotesis.
+
+**Metode yang dibandingkan:**
+1. Baseline 1: BM25 saja (*sparse*).
+2. Baseline 2: BioBERT saja (*dense*).
+3. Usulan: Hybrid (BM25 + BioBERT), dengan $\alpha$ dipilih pada data validasi.
+4. Usulan: Hybrid + disambiguasi koherensi graf.
+
+**Protokol:**
+- Data uji (150 *mention*) dipisah dari data yang dipakai untuk memilih $\alpha$ dan $\lambda$.
+- Hasil dilaporkan keseluruhan dan per jenis variasi (sinonim Latin, akronim, typo), karena kekuatan BM25 dan BioBERT diperkirakan berbeda per jenis.
+- Perbedaan Accuracy@1 antar metode diuji dengan uji McNemar (berpasangan per *mention*); MRR dengan uji Wilcoxon *signed-rank*.
+- Latensi diukur setelah *warm-up*, sebagai median per kueri pada perangkat keras yang sama.
+
+**Hipotesis:**
+- **H1:** Hybrid menghasilkan Accuracy@1 dan MRR lebih tinggi daripada kedua baseline tunggal.
+- **H2:** BM25 unggul pada akronim dan istilah persis, BioBERT unggul pada sinonim dan parafrase, sedangkan pada typo keduanya sama-sama lemah.
+- **H3:** Disambiguasi koherensi graf terutama membantu *mention* ambigu yang memiliki beberapa kandidat dengan skor mirip.
+- **H4:** Hybrid memiliki latensi sedikit di atas BioBERT saja, karena biaya utamanya adalah encoding dense.
 
 ---
 

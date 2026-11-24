@@ -15,20 +15,20 @@ Pada arsitektur sistem **GraphRAG**, tahapan pengambilan konteks (*retrieval*) m
    - *Kelemahan*: **Kebutaan Relasional Multi-Hop (*Multi-Hop Relational Blindness*)**. Vektor search sering mengumpulkan node-node yang semantik katanya mirip namun sebenarnya terputus (*disconnected fragments*), sehingga menghasilkan hubungan palsu (*hallucinated path*).
 
 2. **Cypher Graph Traversal (Structured Topology Matching)**:
-   Sistem mengeksekusi kueri terstruktur berbasis pola deklaratif Cypher pada pangkalan data graf (Neo4j) untuk menelusuri jalur nyata (*real causal path*), misalnya: `(Disease)-[:affects]->(Nerve)-[:innervates]->(Organ)`.
-   - *Kelebihan*: **Presisi Struktural 100%**. Setiap edge yang diambil terbukti secara ontologis terhubung dalam Knowledge Graph.
+   Sistem mengeksekusi kueri terstruktur berbasis pola deklaratif Cypher pada pangkalan data graf (Neo4j) untuk menelusuri jalur yang benar-benar ada di graf, misalnya: `(Disease)-[disease_protein]-(Protein)-[anatomy_protein_present]-(Anatomy)<-[innervates]-(Nerve)`.
+   - *Kelebihan*: **Keterhubungan terjamin**. Setiap edge yang diambil pasti ada dan terhubung di Knowledge Graph (meskipun belum tentu relevan dengan pertanyaan, sehingga presisi terhadap *ground truth* tetap perlu diukur).
    - *Kelemahan*: Sangat rentan terhadap kegagalan sintaksis jika entitas awal kueri (*seed node*) tidak ditemukan secara presisi (*zero recall problem*).
 
-Proyek ini bertujuan menguji dan membandingkan secara kuantitatif **Rasio Ketepatan (*Precision Ratio*)**, **Keutuhan Jalur (*Path Preservation Ratio*)**, serta **Efisiensi Waktu Pengambilan (*Retrieval Latency*)** antara pendekatan *Pure Vector Search*, *Pure Cypher Traversal*, dan *Hybrid Traversal* pada studi kasus penyakit saraf otonom (PrimeKG).
+Proyek ini bertujuan menguji dan membandingkan secara kuantitatif **Rasio Ketepatan (*Precision Ratio*)**, **Keutuhan Jalur (*Path Preservation Ratio*)**, serta **Efisiensi Waktu Pengambilan (*Retrieval Latency*)** antara pendekatan *Pure Vector Search*, *Pure Cypher Traversal*, dan *Hybrid Traversal* pada studi kasus penyakit saraf otonom, menggunakan graf gabungan PrimeKG + FMA.
 
 ### Tabel Input → Proses → Output
 
 | Parameter | Keterangan Rinci |
 |---|---|
-| **Input** | Kueri klinis fisiologi/penyakit saraf (contoh: sindrom Horner, neuropati diabetik otonom) & Knowledge Graph PrimeKG (Neo4j). |
+| **Input** | Kueri klinis fisiologi/penyakit saraf (contoh: sindrom Horner, penyakit Hirschsprung) & graf gabungan PrimeKG + FMA di Neo4j. |
 | **Proses** | 1. Eksekusi Vector Search (HNSW Top-K node/edges).<br>2. Eksekusi Cypher Pattern Traversal (1-hop s.d. 3-hop traversal).<br>3. Eksekusi Hybrid (Vector Entry Point + Cypher Neighborhood Expansion).<br>4. Evaluasi topologi subgraf terhadap *ground truth*. |
 | **Output** | Subgraf terambil ($V_{\text{ret}}, E_{\text{ret}}$), metrik ketepatan edge, rasio konektivitas jalur, dan waktu eksekusi ($ms$). |
-| **Kontribusi Ilmiah** | Menemukan batas hop kritis (*critical hop boundary*) di mana vector search mulai mengalami degradasi struktural dan membuktikan keunggulan arsitektur hybrid. |
+| **Kontribusi Ilmiah** | Mengukur batas hop kritis (*critical hop boundary*) ketika vector search mulai kehilangan keterhubungan jalur, serta menguji apakah arsitektur hybrid dapat menutup kelemahan kedua metode. |
 
 ---
 
@@ -40,7 +40,7 @@ Mahasiswa 2 berada di lapisan **Pangkalan Data Graf dan Akuisisi Konteks Subgraf
 ┌────────────────────────────────────────────────────────────────────────┐
 │                        ARSITEKTUR RETRIEVAL SUBGRAF                    │
 │                                                                        │
-│  [Entitas Masukan dari Mhs 1: "Horner Syndrome" (MONDO:0007740)]       │
+│  [Entitas Masukan dari Mhs 1: "Horner Syndrome" (MONDO:0001294)]       │
 │                               │                                        │
 │                               ▼                                        │
 │  ┌──────────────────────────────────────────────────────────────┐      │
@@ -103,154 +103,152 @@ $$\mathcal{E}_{\text{cyp}}(k) = \{(u, r, v) \in \mathcal{E} \mid \text{dist}_{\m
 1. **Rasio Presisi Edge (Edge Precision Ratio)**:
    Mengukur proporsi edge yang diambil yang benar-benar relevan dengan fakta medis ground truth:
 
-   $$\text{Precision}_{\text{edge}} = \frac{|\mathcal{E}_{\text{ret}} \cap \mathcal{E}^*_q|}{|\mathcal{E}_{\text{ret}}|}$$
+   $$\text{Precision}_{\text{edge}} = \frac{|\mathcal{E}_{\text{ret}} \cap \mathcal{E}^{*}_{q}|}{|\mathcal{E}_{\text{ret}}|}$$
 
 2. **Rasio Kelengkapan Edge (Edge Recall Ratio)**:
    Mengukur seberapa lengkap fakta ground truth yang berhasil terambil:
 
-   $$\text{Recall}_{\text{edge}} = \frac{|\mathcal{E}_{\text{ret}} \cap \mathcal{E}^*_q|}{|\mathcal{E}^*_q|}$$
+   $$\text{Recall}_{\text{edge}} = \frac{|\mathcal{E}_{\text{ret}} \cap \mathcal{E}^*_q|}{|\mathcal{E}^{*}_{q}|}$$
 
 3. **Indeks Keutuhan Jalur (Path Preservation Index / PPI)**:
    Mengukur apakah relasi multi-hop yang diambil membentuk rantai penalaran utuh atau terfragmentasi:
 
-   $$\text{PPI} = \frac{|\{p \in \mathcal{P}(\mathcal{G}_{\text{ret}}) \mid p \subseteq \mathcal{G}^*_q\}|}{|\mathcal{P}(\mathcal{G}^*_q)|}$$
+   $$\text{PPI} = \frac{|\{p \in \mathcal{P}(\mathcal{G}_{\text{ret}}) \mid p \subseteq \mathcal{G}^{*}_{q}\}|}{|\mathcal{P}(\mathcal{G}^{*}_{q})|}$$
 
-   Jika $\text{PPI}=0$, artinya subgraf terambil tidak memiliki jalur penghubung antara penyakit dan organ target, meskipun banyak node individual terambil.
+   Jika $\text{PPI} = 0$, artinya subgraf terambil tidak memiliki jalur penghubung antara penyakit dan organ target, meskipun banyak node individual terambil.
 
 4. **Kepadatan Informasi (Graph Density of Relevance)**:
 
-   $$\rho_{\text{rel}} = \frac{|\mathcal{E}_{\text{ret}} \cap \mathcal{E}^*_q|}{|\mathcal{V}_{\text{ret}}|}$$
-
+   $$\rho_{\text{rel}} = \frac{|\mathcal{E}_{\text{ret}} \cap \mathcal{E}^{*}_{q}|}{|\mathcal{V}_{\text{ret}}|}$$
 
 ---
 
 ## 4. Implementasi Kode Python & Cypher
 
-Berikut adalah modul perbandingan yang mengeksekusi kedua strategi pengambilan data pada Neo4j dan FAISS/Embedding store, diimplementasikan dengan konvensi **Allman style**.
+Berikut adalah modul perbandingan yang mengeksekusi kedua strategi pengambilan data pada Neo4j dan FAISS/Embedding store. Kueri Cypher mengikuti skema hasil `import_neo4j.py` (satu tipe relasi `:RELATION` dengan properti `type`).
 
 ```python
 import time
-import numpy as np
-from typing import List, Dict, Set, Tuple
+from typing import Dict, List, Set, Tuple
+
 from neo4j import GraphDatabase
 
+Edge = Tuple[str, str, str]  # (source, relation, target)
+
+# Relasi yang boleh dilalui traversal: nama relasi asli PrimeKG + relasi persarafan FMA
+# (diimpor sebagai :RELATION {type: 'innervates'}, arah saraf -> struktur target).
+DEFAULT_ALLOWED_RELATIONS = [
+    "disease_phenotype_positive",
+    "disease_protein",
+    "anatomy_protein_present",
+    "innervates",
+]
+
+
 class RetrievalComparator:
-{
+    """Membandingkan retrieval subgraf berbasis traversal Cypher dan vector search."""
+
     def __init__(self, neo4j_uri: str, neo4j_user: str, neo4j_pass: str) -> None:
-    {
         print("[Comparator] Connecting to Neo4j instance...")
         self.driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_pass))
-    }
 
     def close(self) -> None:
-    {
         self.driver.close()
-    }
 
-    def cypher_traversal_retrieval(self, seed_mondo_id: str, max_depth: int = 2) -> Tuple[Set[Tuple], float]:
-    {
+    def cypher_traversal_retrieval(
+        self,
+        seed_mondo_id: str,
+        max_depth: int = 2,
+        allowed_relations: List[str] = DEFAULT_ALLOWED_RELATIONS,
+    ) -> Tuple[Set[Edge], float]:
+        """Mengambil subgraf terhubung hingga max_depth hop dari node penyakit seed.
+
+        Skema hasil import_neo4j.py memakai satu tipe relasi :RELATION dengan
+        properti `type` berisi nama relasi PrimeKG, sehingga filter relasi
+        dilakukan pada properti tersebut, bukan pada tipe relasi Neo4j.
         """
-        Mengambil subgraf terhubung menggunakan kueri Cypher pola graf eksplisit
-        """
+        # Panjang path variabel tidak bisa dijadikan parameter, sehingga disisipkan
+        # sebagai integer (int() mencegah injeksi string ke dalam kueri).
         cypher_query = f"""
-        MATCH path = (d:Disease {{id: $seed_id}})-[r:affects|associated_with|causes*1..{max_depth}]-(target)
+        MATCH path = (d:Disease {{id: $seed_id}})-[rels:RELATION*1..{int(max_depth)}]-(target)
+        WHERE all(rel IN rels WHERE rel.type IN $allowed)
         UNWIND relationships(path) AS rel
-        RETURN DISTINCT startNode(rel).name AS source, type(rel) AS predicate, endNode(rel).name AS target
+        RETURN DISTINCT startNode(rel).name AS source, rel.type AS predicate, endNode(rel).name AS target
         """
 
         t_start = time.perf_counter()
-        retrieved_edges = set()
+        retrieved_edges: Set[Edge] = set()
 
         with self.driver.session() as session:
-        {
-            results = session.run(cypher_query, seed_id=seed_mondo_id)
-            for record in results:
-            {
+            for record in session.run(cypher_query, seed_id=seed_mondo_id, allowed=allowed_relations):
                 retrieved_edges.add((record["source"], record["predicate"], record["target"]))
-            }
-        }
-        latency = (time.perf_counter() - t_start) * 1000.0
-        return retrieved_edges, latency
-    }
 
-    def mock_vector_retrieval(self, query_text: str, top_k: int = 15) -> Tuple[Set[Tuple], float]:
-    {
+        latency_ms = (time.perf_counter() - t_start) * 1000.0
+        return retrieved_edges, latency_ms
+
+    @staticmethod
+    def mock_vector_retrieval(query_text: str, top_k: int = 15) -> Set[Edge]:
+        """Simulasi vector search (Top-K edge berdasarkan kemiripan kosinus).
+
+        Implementasi riil: embed query_text, lalu ambil top_k edge terdekat dari
+        indeks vektor (FAISS / Milvus / Qdrant) yang berisi verbalisasi tiap edge.
         """
-        Simulasi Vector Search (HNSW Top-K edges berbasis Cosine Similarity)
-        Dalam praktek riil, memanggil indeks vector database (mis. Milvus / Qdrant)
-        """
-        t_start = time.perf_counter()
+        simulated_vector_edges = [
+            ("Hirschsprung disease", "disease_protein", "RET"),
+            ("colon", "anatomy_protein_present", "RET"),
+            ("Hirschsprung disease", "disease_phenotype_positive", "Constipation"),  # relevan topik, bukan ground truth
+            ("Chagas disease", "disease_phenotype_positive", "Megacolon"),          # mirip semantik, terputus
+            ("Vagus nerve", "innervates", "Stomach"),                               # mirip semantik, terputus
+        ]
+        return set(simulated_vector_edges[:top_k])
 
-        # Simulasi edge yang terambil oleh pencarian vektor (campuran relevan dan false-positives)
-        simulated_vector_edges = {
-            ("Horner Syndrome", "causes", "Ptosis"),
-            ("Horner Syndrome", "causes", "Miosis"),
-            ("Pupil", "associated_with", "Anisocoria"),
-            ("Cervical Ganglion", "innervates", "Pupil Dilator Muscle"),
-            ("Diabetic Neuropathy", "causes", "Gastroparesis"),  # Noise / False Positive
-            ("Vagus Nerve", "innervates", "Heart")             # Noise / False Positive
-        }
-
-        latency = (time.perf_counter() - t_start) * 1000.0
-        return simulated_vector_edges, latency
-    }
-
-    def compute_metrics(self, retrieved_edges: Set[Tuple], ground_truth_edges: Set[Tuple]) -> Dict[str, float]:
-    {
-        if not retrieved_edges:
-        {
-            return {"precision": 0.0, "recall": 0.0, "f1": 0.0}
-        }
-
-        true_positives = retrieved_edges.intersection(ground_truth_edges)
-        precision = len(true_positives) / len(retrieved_edges)
+    @staticmethod
+    def compute_metrics(retrieved_edges: Set[Edge], ground_truth_edges: Set[Edge]) -> Dict[str, float]:
+        true_positives = retrieved_edges & ground_truth_edges
+        precision = len(true_positives) / len(retrieved_edges) if retrieved_edges else 0.0
         recall = len(true_positives) / len(ground_truth_edges) if ground_truth_edges else 0.0
-        f1 = (2 * precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+        f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
 
         return {
             "precision": round(precision, 4),
             "recall": round(recall, 4),
             "f1": round(f1, 4),
             "total_retrieved": len(retrieved_edges),
-            "true_positives": len(true_positives)
+            "true_positives": len(true_positives),
         }
-    }
-}
+
 
 if __name__ == "__main__":
-{
-    # Ground truth subgraf fisiologis sindrom Horner
+    # Ground truth 3-hop (pola Bagian 5.1) dengan nama relasi asli PrimeKG + FMA.
+    # Ilustratif: setiap edge harus diverifikasi keberadaannya di graf sebelum dipakai.
     ground_truth = {
-        ("Horner Syndrome", "causes", "Ptosis"),
-        ("Horner Syndrome", "causes", "Miosis"),
-        ("Horner Syndrome", "affects", "Sympathetic Trunk"),
-        ("Sympathetic Trunk", "relays_at", "Superior Cervical Ganglion"),
-        ("Superior Cervical Ganglion", "innervates", "Pupil Dilator Muscle")
+        ("Hirschsprung disease", "disease_protein", "RET"),
+        ("Hirschsprung disease", "disease_protein", "EDNRB"),
+        ("colon", "anatomy_protein_present", "RET"),
+        ("Pelvic splanchnic nerve", "innervates", "colon"),
     }
 
     print("=== PENGUJIAN METRIK RETRIEVAL SUBGRAF ===")
 
-    # Mock pengujian tanpa koneksi aktif database eksternal
-    comparator = RetrievalComparator("bolt://localhost:7687", "neo4j", "password_mock")
-
-    # Jalur Vector
-    vec_edges, vec_lat = comparator.mock_vector_retrieval("Horner syndrome pupil pathway", top_k=6)
-    vec_metrics = comparator.compute_metrics(vec_edges, ground_truth)
-    print(f"\n[Vector Search] Latency: {vec_lat:.2f} ms")
+    # Jalur vector (simulasi, tanpa koneksi database)
+    vec_edges = RetrievalComparator.mock_vector_retrieval("Hirschsprung disease colon innervation", top_k=5)
+    vec_metrics = RetrievalComparator.compute_metrics(vec_edges, ground_truth)
+    print("\n[Vector Search]")
     print(f"  Precision: {vec_metrics['precision']:.3f} | Recall: {vec_metrics['recall']:.3f} | F1: {vec_metrics['f1']:.3f}")
 
-    # Simulasi Hasil Cypher Traversal 2-hop terhubung
+    # Jalur Cypher (simulasi hasil traversal dengan max_depth=2, sehingga hop ke-3
+    # dari FMA belum terambil). Dengan Neo4j aktif:
+    #   comparator = RetrievalComparator("bolt://localhost:7687", "neo4j", "<password>")
+    #   cyp_edges, cyp_latency = comparator.cypher_traversal_retrieval("<MONDO id>")
+    #   comparator.close()
     simulated_cypher_edges = {
-        ("Horner Syndrome", "causes", "Ptosis"),
-        ("Horner Syndrome", "causes", "Miosis"),
-        ("Horner Syndrome", "affects", "Sympathetic Trunk"),
-        ("Sympathetic Trunk", "relays_at", "Superior Cervical Ganglion")
+        ("Hirschsprung disease", "disease_protein", "RET"),
+        ("Hirschsprung disease", "disease_protein", "EDNRB"),
+        ("colon", "anatomy_protein_present", "RET"),
     }
-    cyp_lat = 4.25
-    cyp_metrics = comparator.compute_metrics(simulated_cypher_edges, ground_truth)
-    print(f"\n[Cypher Traversal] Latency: {cyp_lat:.2f} ms")
+    cyp_metrics = RetrievalComparator.compute_metrics(simulated_cypher_edges, ground_truth)
+    print("\n[Cypher Traversal]")
     print(f"  Precision: {cyp_metrics['precision']:.3f} | Recall: {cyp_metrics['recall']:.3f} | F1: {cyp_metrics['f1']:.3f}")
-}
 ```
 
 ---
@@ -258,25 +256,34 @@ if __name__ == "__main__":
 ## 5. Desain Eksperimen & Analisis Hop Kritis
 
 ### 5.1 Skenario Pengujian Kedalaman Hop
-Pengujian dilakukan pada 4 tingkat kompleksitas kueri:
-- **1-Hop Direct Query**: Relasi langsung penyakit–gejala (*mis. Horner Syndrome $\to$ Ptosis*).
-- **2-Hop Regional Query**: Relasi penyakit–saraf–ganglion (*mis. Hirschsprung $\to$ Plexus Myentericus $\to$ Kolon*).
-- **3-Hop Causal Chain**: Jalur lengkap patofisiologi (*mis. Autonomic Dysreflexia $\to$ T6 Spinal Injury $\to$ Splanchnic Vasoconstriction $\to$ Hypertensive Crisis*).
+Pengujian dilakukan pada 3 tingkat kedalaman hop. Setiap skenario memakai **pola relasi yang benar-benar ada** di graf gabungan PrimeKG + FMA. Ini penting karena PrimeKG tidak memiliki relasi langsung penyakit–anatomi maupun relasi persarafan; jalur penyakit → anatomi hanya bisa lewat protein, dan persarafan hanya dari FMA.
 
-### 5.2 Rencana Hasil Pengujian (Eksperimental)
+| Skenario | Pola Jalur | Contoh |
+|---|---|---|
+| **1-Hop** | `(Disease)-[disease_phenotype_positive]-(Phenotype)` | Horner syndrome – Ptosis |
+| **2-Hop** | `(Disease)-[disease_protein]-(Protein)-[anatomy_protein_present]-(Anatomy)` | Hirschsprung disease – RET – (struktur anatomi tempat RET terekspresi) |
+| **3-Hop** | Pola 2-hop + `(Anatomy)<-[innervates]-(Nerve)` dari FMA | Hirschsprung disease – RET – colon – (saraf yang mempersarafi colon menurut FMA) |
 
-| Skenario | Metode Retrieval | Precision Edge | Recall Edge | Path Preservation (PPI) | Latensi (ms) |
-|---|---|---|---|---|---|
-| **1-Hop** | Vector Search | 84.5% | **91.0%** | 88.0% | **3.1 ms** |
-| | Cypher Traversal | **98.2%** | 86.4% | **98.2%** | 5.8 ms |
-| **2-Hop** | Vector Search | 61.2% | 72.5% | 45.0% | **4.2 ms** |
-| | Cypher Traversal | **94.7%** | **84.1%** | **92.0%** | 8.4 ms |
-| **3-Hop** | Vector Search | 38.0% | 51.2% | **12.5%** *(Runtuh)* | **5.5 ms** |
-| | Cypher Traversal | **89.5%** | **79.8%** | **86.4%** | 16.2 ms |
-| **3-Hop** | **Hybrid (Usulan)** | **88.1%** | **86.5%** | **87.2%** | 9.7 ms |
+Contoh di atas harus diverifikasi keberadaannya di graf sebelum dijadikan kasus uji. Kasus uji yang jalurnya terputus di graf tidak dipakai, karena akan membatasi recall Cypher karena data, bukan karena metodenya. Nama relasi `innervates` mengikuti relasi kanonik untuk edge persarafan FMA yang dipakai bersama dengan Mahasiswa 3.
 
-> **Temuan Kunci (Critical Insight):**
-> Pada penelusuran 3-hop, *Path Preservation Index (PPI)* pada Vector Search runtuh hingga **12.5%**. Hal ini membuktikan bahwa vector search mengalami *semantic fragmentation*: ia berhasil menemukan kata kunci entitas, tetapi gagal menyajikan keterhubungan rantai kausal.
+### 5.2 Desain Eksperimen dan Hipotesis
+
+> Angka hasil **tidak** dicantumkan sebelum eksperimen dijalankan. Yang dirumuskan di proposal adalah desain, protokol, dan hipotesis.
+
+**Desain:** 3 metode (Vector Search, Cypher Traversal, Hybrid) × 3 skenario hop (Bagian 5.1), masing-masing pada kasus uji yang sama. Metrik: Edge Precision, Edge Recall, PPI, $\rho_{\text{rel}}$, dan latensi (Bagian 3.4).
+
+**Protokol agar perbandingan adil:**
+- Indeks vektor dibangun dari verbalisasi edge graf yang **sama** dengan yang ditelusuri Cypher.
+- Vector Search dievaluasi pada beberapa nilai $k$ (misalnya $k = |\mathcal{E}^{*}_{q}|$, $2|\mathcal{E}^{*}_{q}|$, dan 20), karena precision dan recall sangat bergantung pada $k$.
+- Latensi diukur setelah *warm-up*, sebagai median dari minimal 10 pengulangan, pada perangkat keras yang sama.
+- Kasus ketika *seed node* gagal ditemukan dicatat terpisah, karena di sinilah kelemahan Cypher dan keunggulan Hybrid diharapkan muncul.
+- Perbedaan antar metode per skenario hop diuji dengan uji Wilcoxon *signed-rank* berpasangan per kasus uji. **Hop kritis** didefinisikan di awal sebagai hop pertama ketika PPI Vector Search berbeda signifikan dan lebih rendah daripada Cypher.
+
+**Hipotesis:**
+- **H1:** Selisih PPI antara Cypher dan Vector Search makin besar seiring bertambahnya hop.
+- **H2:** Pada 1-hop, recall Vector Search sebanding dengan Cypher.
+- **H3:** Hybrid mempertahankan PPI mendekati Cypher dan memiliki recall lebih tinggi pada kasus yang *seed node*-nya tidak ditemukan persis.
+- **H4:** Latensi Cypher naik lebih cepat daripada Vector Search seiring bertambahnya hop.
 
 ---
 
@@ -322,7 +329,7 @@ Dokumen proposal skripsi berfokus pada pematangan masalah, landasan teori, dan m
   2. Pada ambang batas hop ke berapa pencarian vektor mengalami degradasi topologi kritis dalam mengakuisisi subgraf relasi penyakit dan anatomi saraf?
   3. Bagaimana arsitektur *Hybrid Retrieval* dapat memitigasi kelemahan kedua metode tersebut?
 - **Batasan Masalah**:
-  - Pangkalan data graf menggunakan PrimeKG subgraf neuroanatomi dan penyakit sistem saraf otonom yang di-host pada Neo4j.
+  - Pangkalan data graf menggunakan graf gabungan PrimeKG (relasi penyakit–fenotipe, penyakit–protein, anatomi–protein) dan FMA (relasi persarafan), ditautkan melalui rujukan silang UBERON–FMA dan di-host pada Neo4j.
   - Vektor embedding edge diindeks menggunakan FAISS (IndexFlatIP/HNSW).
 - **Tujuan Penelitian**: Menyediakan analisis empiris kuantitatif rasio ketepatan, integritas jalur kausal, dan latensi komputasi antara kedua paradigma pengambilan data.
 
@@ -344,10 +351,10 @@ Dokumen proposal skripsi berfokus pada pematangan masalah, landasan teori, dan m
 Berikut adalah antisipasi pertanyaan kritis yang lazim dilontarkan dosen penguji saat **Sidang Seminar Proposal**:
 
 > **Tanya Dosen Penguji:** *"Mengapa Anda membandingkan Vector Search dan Cypher Traversal? Bukankah keduanya dirancang untuk keperluan yang berbeda?"*
-> **Jawab:** Dalam arsitektur GraphRAG modern, terjadi perdebatan arsitektural: apakah kita cukup menggunakan *Vector Search* sederhana (menyimpan triple graf sebagai teks biasa) ataukah investasi infrastruktur pangkalan data graf (Neo4j Cypher) mutlak diperlukan. Penelitian ini hadir untuk menjawab perdebatan tersebut secara saintifik dan empiris pada domain spesifik fisiologi saraf, membuktikan secara kuantitatif batas hop di mana vector search mulai runtuh dan gagal mempertahankan kausalitas medis.
+> **Jawab:** Dalam arsitektur GraphRAG modern, terjadi perdebatan arsitektural: apakah kita cukup menggunakan *Vector Search* sederhana (menyimpan triple graf sebagai teks biasa) ataukah investasi infrastruktur pangkalan data graf (Neo4j Cypher) mutlak diperlukan. Penelitian ini hadir untuk menjawab perdebatan tersebut secara saintifik dan empiris pada domain spesifik fisiologi saraf, dengan mengukur secara kuantitatif pada kedalaman hop berapa vector search mulai kehilangan keterhubungan jalur.
 
 > **Tanya Dosen Penguji:** *"Bagaimana Anda menentukan ground truth subgraf secara objektif agar komparasi ini valid dan tidak bias terhadap Cypher?"*
-> **Jawab:** *Ground truth* tidak disusun secara subjektif oleh peneliti, melainkan diambil dari jalur relasi kurasi ahli yang sudah terdokumentasi dalam literatur medis standar dan konsorsium PrimeKG (jalur terverifikasi dari penyakit MONDO $\to$ saraf UBERON $\to$ fenotipe HPO). Kami menguji kueri bahasa alami netral yang diumpankan ke kedua sistem secara adil (*fair benchmark*).
+> **Jawab:** *Ground truth* disusun dari jalur yang benar-benar ada di graf gabungan PrimeKG + FMA, dengan nama relasi asli (misalnya `disease_phenotype_positive`, `disease_protein`, `anatomy_protein_present`, dan relasi persarafan FMA), lalu diperiksa kesesuaiannya dengan literatur medis standar. Kedua metode mengakses graf yang sama: indeks vektor dibangun dari verbalisasi edge graf tersebut, dan kueri bahasa alaminya sama untuk kedua sistem. Kasus uji yang jalurnya terputus di graf dikeluarkan agar tidak ada metode yang dirugikan oleh kekurangan data.
 
 > **Tanya Dosen Penguji:** *"Apa manfaat praktis hasil penelitian ini bagi pengembangan sistem AI kesehatan?"*
 > **Jawab:** Manfaat utamanya adalah panduan arsitektur (*architectural guideline*). Pengembang sistem AI medis akan mengetahui kapan harus mengalokasikan memori untuk graf traversal dan kapan cukup menggunakan pencarian vektor murah, serta menjadi dasar implementasi modul *Hybrid Retrieval Router* yang efisien token dan bebas dari halusinasi relasional.
