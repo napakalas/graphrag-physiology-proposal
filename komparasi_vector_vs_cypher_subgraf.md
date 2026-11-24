@@ -285,6 +285,20 @@ Contoh di atas harus diverifikasi keberadaannya di graf sebelum dijadikan kasus 
 - **H3:** Hybrid mempertahankan PPI mendekati Cypher dan memiliki recall lebih tinggi pada kasus yang *seed node*-nya tidak ditemukan persis.
 - **H4:** Latensi Cypher naik lebih cepat daripada Vector Search seiring bertambahnya hop.
 
+### Rujukan Data & Ontologi
+
+| Sumber | Tautan | Kegunaan |
+|---|---|---|
+| PrimeKG (Harvard Dataverse) | https://doi.org/10.7910/DVN/IXA7BM | Unduh `kg.csv` |
+| FMA (BioPortal) | https://bioportal.bioontology.org/ontologies/FMA | Telusuri konsep, relasi, dan unduhan FMA |
+| FMA (EBI OLS) | https://www.ebi.ac.uk/ols4/ontologies/fma | Cek ID, label resmi, dan hierarki *is_a* |
+| FMA (OWL, OBO) | http://purl.obolibrary.org/obo/fma.owl | Berkas OWL untuk ekstraksi kamus/edge |
+| UBERON (EBI OLS) | https://www.ebi.ac.uk/ols4/ontologies/uberon | Cek ID, sinonim, dan rujukan silang ke FMA |
+| MONDO (EBI OLS) | https://www.ebi.ac.uk/ols4/ontologies/mondo | Cek ID penyakit (node Disease PrimeKG) |
+| HPO (EBI OLS) | https://www.ebi.ac.uk/ols4/ontologies/hp | Cek ID fenotipe (prefiks resmi `HP:`) |
+
+Pola IRI FMA berbeda antar distribusi: OLS/BioPortal memakai `http://purl.org/sig/ont/fma/fma5731`, sedangkan versi OBO memakai `http://purl.obolibrary.org/obo/FMA_5731`. Sesuaikan saat mem-parsing berkas OWL.
+
 ---
 
 ## 6. Struktur Direktori Proyek

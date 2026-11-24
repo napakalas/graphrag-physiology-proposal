@@ -353,6 +353,14 @@ for name, score in results:
     print(f"  {name:<30}  score: {score:.4f}")
 ```
 
+### Rujukan Data & Ontologi
+
+| Sumber | Tautan | Kegunaan |
+|---|---|---|
+| PrimeKG (Harvard Dataverse) | https://doi.org/10.7910/DVN/IXA7BM | Unduh `kg.csv` |
+| MONDO (EBI OLS) | https://www.ebi.ac.uk/ols4/ontologies/mondo | Cek ID penyakit (node Disease PrimeKG) |
+| DrugBank | https://go.drugbank.com/ | Cek ID obat (node Drug PrimeKG) |
+
 ---
 
 ## 6. Stack Teknologi (rekomendasi untuk S1)

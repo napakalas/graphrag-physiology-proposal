@@ -408,6 +408,14 @@ RAGAS Scores:
 
 **Nilai kontribusi:** Tanpa dataset ground-truth dan harness ini, tidak ada cara objektif untuk membuktikan bahwa pipeline lengkap benar-benar lebih baik dari sistem sederhana.
 
+### Rujukan Data & Ontologi
+
+| Sumber | Tautan | Kegunaan |
+|---|---|---|
+| PrimeKG (Harvard Dataverse) | https://doi.org/10.7910/DVN/IXA7BM | Unduh `kg.csv` |
+| MONDO (EBI OLS) | https://www.ebi.ac.uk/ols4/ontologies/mondo | Cek ID penyakit (node Disease PrimeKG) |
+| HPO (EBI OLS) | https://www.ebi.ac.uk/ols4/ontologies/hp | Cek ID fenotipe (prefiks resmi `HP:`) |
+
 ---
 
 ## 8. Struktur Folder Proyek

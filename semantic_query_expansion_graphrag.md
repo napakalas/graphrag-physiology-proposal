@@ -296,6 +296,15 @@ project/
 └── app.py                  # Streamlit UI
 ```
 
+### Rujukan Data & Ontologi
+
+| Sumber | Tautan | Kegunaan |
+|---|---|---|
+| PrimeKG (Harvard Dataverse) | https://doi.org/10.7910/DVN/IXA7BM | Unduh `kg.csv` |
+| MONDO (EBI OLS) | https://www.ebi.ac.uk/ols4/ontologies/mondo | Cek ID penyakit (node Disease PrimeKG) |
+| HPO (EBI OLS) | https://www.ebi.ac.uk/ols4/ontologies/hp | Cek ID fenotipe (prefiks resmi `HP:`) |
+| UBERON (EBI OLS) | https://www.ebi.ac.uk/ols4/ontologies/uberon | Cek ID, sinonim, dan rujukan silang ke FMA |
+
 ---
 
 ## 5. Stack Teknologi (rekomendasi untuk S1)

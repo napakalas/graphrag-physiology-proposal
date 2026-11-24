@@ -96,6 +96,20 @@ Arah kanonik ini menjadi acuan saat mendeteksi relasi terbalik (*subject-object 
 
 **Keterbatasan yang harus dinyatakan:** cakupan relasi persarafan di FMA tidak lengkap untuk semua organ, dan tidak semua struktur FMA memiliki data ekspresi protein di PrimeKG. Pertanyaan uji hanya disusun dari bagian graf yang datanya tersedia.
 
+**Rujukan data dan ontologi:**
+
+| Sumber | Tautan | Kegunaan |
+|---|---|---|
+| PrimeKG (Harvard Dataverse) | https://doi.org/10.7910/DVN/IXA7BM | Unduh `kg.csv` |
+| FMA (BioPortal) | https://bioportal.bioontology.org/ontologies/FMA | Telusuri konsep, relasi, dan unduhan FMA |
+| FMA (EBI OLS) | https://www.ebi.ac.uk/ols4/ontologies/fma | Cek ID, label resmi, dan hierarki *is_a* |
+| FMA (OWL, OBO) | http://purl.obolibrary.org/obo/fma.owl | Berkas OWL untuk ekstraksi edge |
+| UBERON (BioPortal) | https://bioportal.bioontology.org/ontologies/UBERON | Telusuri konsep anatomi PrimeKG |
+| UBERON (EBI OLS) | https://www.ebi.ac.uk/ols4/ontologies/uberon | Cek ID dan rujukan silang ke FMA |
+| MeSH Browser | https://meshb.nlm.nih.gov/ | Rujukan batas cakupan fisiologi (kategori G vs. C dan D) |
+
+Pola IRI FMA berbeda antar distribusi: OLS/BioPortal memakai `http://purl.org/sig/ont/fma/fma5731`, sedangkan versi OBO memakai `http://purl.obolibrary.org/obo/FMA_5731`. Sesuaikan saat mem-parsing berkas OWL.
+
 ---
 
 ## 4. Landasan Teori & Formulasi Matematis

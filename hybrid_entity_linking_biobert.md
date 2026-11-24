@@ -293,6 +293,17 @@ if __name__ == "__main__":
 - **H3:** Disambiguasi koherensi graf terutama membantu *mention* ambigu yang memiliki beberapa kandidat dengan skor mirip.
 - **H4:** Hybrid memiliki latensi sedikit di atas BioBERT saja, karena biaya utamanya adalah encoding dense.
 
+### Rujukan Data & Ontologi
+
+| Sumber | Tautan | Kegunaan |
+|---|---|---|
+| UBERON (BioPortal) | https://bioportal.bioontology.org/ontologies/UBERON | Telusuri konsep anatomi PrimeKG |
+| UBERON (EBI OLS) | https://www.ebi.ac.uk/ols4/ontologies/uberon | Cek ID, sinonim, dan rujukan silang ke FMA |
+| UBERON (OWL, OBO) | http://purl.obolibrary.org/obo/uberon.owl | Berkas OWL untuk membangun basis pengetahuan linking |
+| FMA (BioPortal) | https://bioportal.bioontology.org/ontologies/FMA | Telusuri konsep, relasi, dan unduhan FMA |
+| FMA (EBI OLS) | https://www.ebi.ac.uk/ols4/ontologies/fma | Cek ID, label resmi, dan hierarki *is_a* |
+| PrimeKG (Harvard Dataverse) | https://doi.org/10.7910/DVN/IXA7BM | Unduh `kg.csv` |
+
 ---
 
 ## 6. Struktur Direktori Proyek

@@ -348,6 +348,17 @@ Untuk tugas akhir S1, data anotasi dapat dikurasi dari buku teks kedokteran terb
 - **H3:** Lapisan CRF memberi peningkatan kecil, terutama pada konsistensi transisi label B/I.
 - **H4:** Kelas `ANAT_TARGET` memiliki F1 terendah karena isinya paling heterogen (organ, jaringan, otot, kelenjar).
 
+### Rujukan Data & Ontologi
+
+| Sumber | Tautan | Kegunaan |
+|---|---|---|
+| FMA (BioPortal) | https://bioportal.bioontology.org/ontologies/FMA | Telusuri konsep, relasi, dan unduhan FMA |
+| FMA (EBI OLS) | https://www.ebi.ac.uk/ols4/ontologies/fma | Cek ID, label resmi, dan hierarki *is_a* |
+| FMA (OWL, OBO) | http://purl.obolibrary.org/obo/fma.owl | Berkas OWL untuk ekstraksi kamus/edge |
+| PubMed | https://pubmed.ncbi.nlm.nih.gov/ | Sumber abstrak untuk korpus anotasi |
+
+Pola IRI FMA berbeda antar distribusi: OLS/BioPortal memakai `http://purl.org/sig/ont/fma/fma5731`, sedangkan versi OBO memakai `http://purl.obolibrary.org/obo/FMA_5731`. Sesuaikan saat mem-parsing berkas OWL.
+
 ---
 
 ## 6. Struktur Direktori Proyek
